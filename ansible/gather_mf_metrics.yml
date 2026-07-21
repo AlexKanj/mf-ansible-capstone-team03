@@ -1,0 +1,94 @@
+---
+# Collects system-level z/OS metrics and writes mf_metrics.prom for
+# the pipeline to append to its Pushgateway push.
+# Enable via RUN_MF_METRICS=true in the Bitbucket pipeline variables.
+- name: Gather z/OS system metrics for Prometheus
+  hosts: zos
+  gather_facts: false
+  collections:
+    - ibm.ibm_zos_core
+  environment: "{{ environment_vars }}"
+
+  tasks:
+
+    # ----------------------------------------------------------------
+    # Dataset inventory — LISTCAT without ALL gives one line per entry:
+    #   NONVSAM ------- IBMUSER.CUSTOMER.DATA
+    #   CLUSTER ------- IBMUSER.VSAM.KSDS
+    # We parse the type keyword and dataset name from each line.
+    # ----------------------------------------------------------------
+    - name: List all IBMUSER catalog entries
+      zos_tso_command:
+        commands:
+          - LISTCAT ENTRIES('IBMUSER')
+      register: listcat_result
+
+    - name: Parse dataset names and types from LISTCAT output
+      set_fact:
+        _listcat_text: "{{ listcat_result.output[0].content | join('\n') }}"
+
+    - name: Extract dataset list (type + name pairs)
+      set_fact:
+        _dataset_pairs: >-
+          {{ _listcat_text
+             | regex_findall('^\s*(NONVSAM|CLUSTER|AIX|PATH|ALIAS|GDG)\s+-+\s+(\S+)', multiline=True) }}
+
+    - name: Derive dataset count
+      set_fact:
+        _dataset_count: "{{ _dataset_pairs | length }}"
+
+    # ----------------------------------------------------------------
+    # Active job counts — query all jobs and break down by class:
+    #   STC = Started Tasks (system daemons like TCPIP, JES2, VTAM)
+    #   JOB = Batch jobs submitted by users
+    # ----------------------------------------------------------------
+    - name: Query all active z/OS jobs
+      zos_job_query:
+      register: active_jobs
+
+    - name: Count active started tasks (STCs)
+      set_fact:
+        _stc_count: >-
+          {{ active_jobs.jobs
+             | selectattr('job_class', 'defined')
+             | selectattr('job_class', 'equalto', 'STC')
+             | list | length }}
+
+    - name: Count active batch jobs
+      set_fact:
+        _batch_count: >-
+          {{ active_jobs.jobs
+             | selectattr('job_class', 'defined')
+             | selectattr('job_class', 'equalto', 'JOB')
+             | list | length }}
+
+    - name: Count total active jobs (all classes)
+      set_fact:
+        _total_job_count: "{{ active_jobs.jobs | length }}"
+
+    # ----------------------------------------------------------------
+    # Write metrics file — pipeline appends this to metrics.prom
+    # and pushes everything in one curl call.
+    # ----------------------------------------------------------------
+    - name: Write mf_metrics.prom
+      copy:
+        dest: "{{ playbook_dir }}/mf_metrics.prom"
+        content: |
+          # HELP zos_ibmuser_dataset_count Total cataloged datasets under the IBMUSER HLQ
+          # TYPE zos_ibmuser_dataset_count gauge
+          zos_ibmuser_dataset_count{host="{{ inventory_hostname }}"} {{ _dataset_count }}
+          # HELP zos_active_stc_count Number of currently active started tasks
+          # TYPE zos_active_stc_count gauge
+          zos_active_stc_count{host="{{ inventory_hostname }}"} {{ _stc_count }}
+          # HELP zos_active_batch_job_count Number of currently active batch jobs
+          # TYPE zos_active_batch_job_count gauge
+          zos_active_batch_job_count{host="{{ inventory_hostname }}"} {{ _batch_count }}
+          # HELP zos_active_job_count Total active jobs across all classes
+          # TYPE zos_active_job_count gauge
+          zos_active_job_count{host="{{ inventory_hostname }}"} {{ _total_job_count }}
+          # HELP zos_dataset_exists Presence of a cataloged dataset; type label shows VSAM type
+          # TYPE zos_dataset_exists gauge
+          {% for pair in _dataset_pairs %}
+          zos_dataset_exists{host="{{ inventory_hostname }}",dataset="{{ pair[1] }}",type="{{ pair[0] }}"} 1
+          {% endfor %}
+      delegate_to: localhost

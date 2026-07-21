@@ -1,0 +1,131 @@
+name: Run Ansible Mainframe
+
+on:
+  workflow_dispatch:
+    inputs:
+      PLAYBOOK_NAME:
+        description: Ansible playbook to run
+        default: run_jcl.yml
+        required: true
+      JCL_FILE:
+        description: JCL file to submit
+        default: hello_world.jcl
+        required: true
+      STUDENT_ID:
+        description: Student ID
+        default: ""
+        required: false
+      RUN_MF_METRICS:
+        description: Gather mainframe system metrics
+        default: "false"
+        required: false
+
+jobs:
+  run-ansible-playbook:
+    name: Run Ansible playbook on z/OS
+    runs-on: ubuntu-latest
+    container:
+      image: innovationinsoftware/mf-ansible:1.8.0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run playbook
+        working-directory: ansible
+        env:
+          PLAYBOOK_NAME: ${{ inputs.PLAYBOOK_NAME }}
+          JCL_FILE: ${{ inputs.JCL_FILE }}
+          STUDENT_ID: ${{ inputs.STUDENT_ID }}
+          RUN_MF_METRICS: ${{ inputs.RUN_MF_METRICS }}
+          REPO_SLUG: ${{ github.event.repository.name }}
+          BRANCH: ${{ github.ref_name }}
+          BUILD_NUMBER: ${{ github.run_number }}
+          PUSHGATEWAY_URL: ${{ secrets.PUSHGATEWAY_URL }}
+        run: |
+          chmod 600 id_rsa
+          export ANSIBLE_HOST_KEY_CHECKING=False
+
+          export START_TIME=$(date +%s)
+
+          set +e
+
+          ansible-playbook \
+            -u ibmuser \
+            -i inventory.yml \
+            --private-key id_rsa \
+            -e "jcl_file=${JCL_FILE} student_id=${STUDENT_ID}" \
+            ${PLAYBOOK_NAME}
+
+          RESULT=$?
+          set -e
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          RUN_TIMESTAMP=$(date +%s)
+
+          if [ "$RESULT" -eq 0 ]; then
+            SUCCESS=1
+            FAILURE=0
+          else
+            SUCCESS=0
+            FAILURE=1
+          fi
+
+          cat <<EOF > metrics.prom
+          # HELP bitbucket_ansible_playbook_latest_success Whether the latest playbook run succeeded
+          # TYPE bitbucket_ansible_playbook_latest_success gauge
+          bitbucket_ansible_playbook_latest_success{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${SUCCESS}
+
+          # HELP bitbucket_ansible_playbook_latest_failure Whether the latest playbook run failed
+          # TYPE bitbucket_ansible_playbook_latest_failure gauge
+          bitbucket_ansible_playbook_latest_failure{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${FAILURE}
+
+          # HELP bitbucket_ansible_playbook_latest_exit_code Exit code from the latest playbook run
+          # TYPE bitbucket_ansible_playbook_latest_exit_code gauge
+          bitbucket_ansible_playbook_latest_exit_code{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${RESULT}
+
+          # HELP bitbucket_ansible_playbook_latest_duration_seconds Duration of the latest playbook run
+          # TYPE bitbucket_ansible_playbook_latest_duration_seconds gauge
+          bitbucket_ansible_playbook_latest_duration_seconds{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${DURATION}
+
+          # HELP bitbucket_ansible_playbook_last_run_timestamp_seconds Unix timestamp of latest playbook run
+          # TYPE bitbucket_ansible_playbook_last_run_timestamp_seconds gauge
+          bitbucket_ansible_playbook_last_run_timestamp_seconds{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${RUN_TIMESTAMP}
+
+          # HELP bitbucket_ansible_playbook_run_success One time series per successful build
+          # TYPE bitbucket_ansible_playbook_run_success gauge
+          bitbucket_ansible_playbook_run_success{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}",build="${BUILD_NUMBER}"} ${SUCCESS}
+
+          # HELP bitbucket_ansible_playbook_run_failure One time series per failed build
+          # TYPE bitbucket_ansible_playbook_run_failure gauge
+          bitbucket_ansible_playbook_run_failure{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}",build="${BUILD_NUMBER}"} ${FAILURE}
+
+          # HELP bitbucket_ansible_playbook_run_duration_seconds Duration for this specific build
+          # TYPE bitbucket_ansible_playbook_run_duration_seconds gauge
+          bitbucket_ansible_playbook_run_duration_seconds{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}",build="${BUILD_NUMBER}"} ${DURATION}
+          EOF
+
+          # Append job-level metrics if run_jcl.yml wrote them
+          if [ -f job_metrics.prom ]; then
+            cat job_metrics.prom >> metrics.prom
+          fi
+
+          # Optionally run the system metrics playbook
+          if [ "${RUN_MF_METRICS}" = "true" ]; then
+            ansible-playbook \
+              -u ibmuser \
+              -i inventory.yml \
+              --private-key id_rsa \
+              gather_mf_metrics.yml
+
+            if [ -f mf_metrics.prom ]; then
+              cat mf_metrics.prom >> metrics.prom
+            fi
+          fi
+
+          cat metrics.prom
+
+          curl --data-binary @metrics.prom \
+            "${PUSHGATEWAY_URL}/metrics/job/bitbucket_ansible/playbook/${PLAYBOOK_NAME}/repo/${REPO_SLUG}/build/${BUILD_NUMBER}"
+
+          exit $RESULT

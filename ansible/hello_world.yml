@@ -1,0 +1,39 @@
+---
+# Submits a simple Hello World job via BPXBATCH (z/OS Unix shell).
+# Writes the JCL inline, submits it, and prints the spool output.
+- name: Hello World JCL job
+  hosts: zos
+  gather_facts: false
+  collections:
+    - ibm.ibm_zos_core
+  environment: "{{ environment_vars }}"
+
+  tasks:
+    - name: Write Hello World JCL to USS
+      zos_copy:
+        content: |
+          //HELOWRLD JOB CLASS=A,MSGCLASS=X,MSGLEVEL=(1,1)
+          //STEP1    EXEC PGM=BPXBATCH
+          //STDOUT   DD SYSOUT=*
+          //STDERR   DD SYSOUT=*
+          //STDPARM  DD *
+          SH echo "Hello, World from z/OS!"
+          /*
+        dest: /u/ibmuser/hello_world.jcl
+        force: true
+
+    - name: Submit Hello World job
+      zos_job_submit:
+        src: /u/ibmuser/hello_world.jcl
+        location: USS
+        wait_time_s: 60
+        return_output: true
+      register: job_output
+
+    - name: Show job ID and return code
+      debug:
+        msg: "Job {{ job_output.jobs[0].job_id }} completed RC={{ job_output.jobs[0].ret_code.msg }}"
+
+    - name: Show spool output
+      debug:
+        msg: "{{ job_output.jobs[0].ddnames | map(attribute='content') | list }}"

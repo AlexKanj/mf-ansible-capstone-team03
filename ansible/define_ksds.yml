@@ -1,0 +1,54 @@
+---
+- name: Conditionally delete and then define a KSDS
+  hosts: zos
+  gather_facts: false
+  collections:
+    - ibm.ibm_zos_core
+  environment: "{{ environment_vars }}"
+
+  tasks:
+    - name: DELETE/DEFINE KSDS
+      zos_mvs_raw:
+        program_name: idcams
+        auth: true
+        dds:
+          - dd_output:
+              dd_name: sysprint
+              return_content:
+                type: text
+          - dd_input:
+              dd_name: sysin
+              content: |-
+               " DELETE IBMUSER.TEST.KSDS1
+               " IF LASTCC < 9 THEN -
+               "   DEFINE CLUSTER( -
+               "   NAME(IBMUSER.TEST.KSDS1) -
+               "   CYL(10 10) -
+               "   FREESPACE(10 10) -
+               "   INDEXED -
+               "   KEYS(10 0) -
+               "   NOERASE NONSPANNED NOREUSE -
+               "   RECORDSIZE(80 80) -
+               "   UNIQUE) -
+               "  DATA( -
+               "    NAME(IBMUSER.TEST.KSDS1.DATA) -
+               "   )
+      register: result
+
+    - fail:
+        msg: |
+          IDCAMS failed
+          "CC={{ result.ret_code.code }}"
+          "{{ result }}"
+      when:
+        - result.ret_code.code | int  > 8
+
+    - name: Issue a LISTCAT command to verify the cluster was catalogued
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - LISTCAT ENTRIES('IBMUSER.TEST.KSDS1')
+      register: result
+
+    - name: Display result of LISTCAT
+      debug:
+        msg: "{{ result }}"      

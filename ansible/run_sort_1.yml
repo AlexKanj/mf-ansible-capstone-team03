@@ -1,0 +1,59 @@
+---
+- name: Run a simple sort of a data set
+  hosts: zos
+  gather_facts: false
+  collections:
+    - ibm.ibm_zos_core
+  environment: "{{ environment_vars }}"
+
+  tasks:
+    - name: Get rid of SYSOUT
+      zos_data_set:
+        name: ibmuser.sortout.example1
+        state: absent
+
+    - name: Execute DFSORT
+      zos_mvs_raw:
+        program_name: sort
+        auth: false
+        dds:
+          - dd_data_set:
+              dd_name: sortin
+              data_set_name: ibmuser.sortin.example1
+              disposition: shr
+          - dd_data_set:
+              dd_name: sortout
+              data_set_name: ibmuser.sortout.example1
+              type: seq
+              disposition: new
+              disposition_normal: catalog
+              disposition_abnormal: delete
+              replace: true
+              space_primary: 1
+              space_secondary: 1
+              space_type: trk
+              record_format: fb
+          - dd_output:
+              dd_name: sysout
+              return_content:
+                type: text
+          - dd_input:
+              dd_name: sysin
+              content: |-
+               " SORT FIELDS=(1,14,CH,A)
+      register: result
+
+    - name: Show result
+      debug:
+        msg: "{{ result }}"
+
+    - name: Fetch z/OS data set
+      zos_fetch:
+        src: ibmuser.sortout.example1
+        dest: ./sortout_example1.txt
+        flat: true
+
+    - name: Display fetched data set
+      debug:
+        msg: |
+          " {{ lookup('file', './sortout_example1.txt') }}              

@@ -1,0 +1,15 @@
+# HELP zos_ibmuser_dataset_count Total cataloged datasets under the IBMUSER HLQ
+# TYPE zos_ibmuser_dataset_count gauge
+zos_ibmuser_dataset_count{host="mainframe"} 1
+# HELP zos_active_stc_count Number of currently active started tasks
+# TYPE zos_active_stc_count gauge
+zos_active_stc_count{host="mainframe"} 77
+# HELP zos_active_batch_job_count Number of currently active batch jobs
+# TYPE zos_active_batch_job_count gauge
+zos_active_batch_job_count{host="mainframe"} 0
+# HELP zos_active_job_count Total active jobs across all classes
+# TYPE zos_active_job_count gauge
+zos_active_job_count{host="mainframe"} 83
+# HELP zos_dataset_exists Presence of a cataloged dataset; type label shows VSAM type
+# TYPE zos_dataset_exists gauge
+zos_dataset_exists{host="mainframe",dataset="IBMUSER",type="ALIAS"} 1
