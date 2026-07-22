@@ -1,15 +1,15 @@
 # Mainframe Customer Processing Platform
 
-Ansible-based automation for running JCL jobs and collecting operational metrics from a z/OS mainframe, integrated with Bitbucket Pipelines and Prometheus/Grafana for observability.
+Ansible-based automation for running JCL jobs and collecting operational metrics from a z/OS mainframe, integrated with GitHub Actions and Prometheus/Grafana for observability.
 
 ---
 
 ## Prerequisites
 
-- Bitbucket repository with Pipelines enabled
+- GitHub repository with Actions enabled
 - SSH key pair with access to the z/OS system (`id_rsa` / `id_rsa.pub` in `ansible/`)
 - A running Prometheus Pushgateway (e.g. `http://YOUR_IP:9091`) INSTALL GUIDE -> https://github.com/d-blanco/prometheus-push-gateway
-- The following Bitbucket Pipeline **repository variable** (set in repo Settings → Pipelines → Repository variables):
+- The following GitHub Actions **repository secret** (set in repo Settings → Secrets and variables → Actions):
   | Variable | Description |
   |---|---|
   | `PUSHGATEWAY_URL` | Pushgateway base URL, e.g. `http://1.2.3.4:9091` |
@@ -46,7 +46,7 @@ ansible/
 
 ## Running the Pipeline
 
-Trigger **run-ansible-mainframe** from Bitbucket Pipelines → Run pipeline → Custom.
+Trigger **run-ansible-mainframe** from GitHub Actions → Run workflow.
 
 ### Pipeline Variables
 

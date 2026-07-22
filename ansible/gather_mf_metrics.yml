@@ -1,7 +1,7 @@
 ---
 # Collects system-level z/OS metrics and writes mf_metrics.prom for
 # the pipeline to append to its Pushgateway push.
-# Enable via RUN_MF_METRICS=true in the Bitbucket pipeline variables.
+# Enable via RUN_MF_METRICS=true in the GitHub Actions workflow inputs.
 - name: Gather z/OS system metrics for Prometheus
   hosts: zos
   gather_facts: false

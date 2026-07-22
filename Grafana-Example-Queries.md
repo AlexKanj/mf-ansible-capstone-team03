@@ -1,6 +1,6 @@
 # Grafana Queries — Mainframe Customer Processing Platform
 
-PromQL queries for monitoring Bitbucket Pipelines, z/OS job execution, and mainframe system health.
+PromQL queries for monitoring GitHub Actions pipelines, z/OS job execution, and mainframe system health.
 
 ---
 
@@ -25,37 +25,37 @@ PromQL queries for monitoring Bitbucket Pipelines, z/OS job execution, and mainf
 
 ### Latest run status
 ```promql
-bitbucket_ansible_playbook_latest_success{repo="mf"}
+github_ansible_playbook_latest_success{repo="mf"}
 ```
 *Stat panel — green=1, red=0*
 
 ### Overall pipeline success rate (%)
 ```promql
 100 *
-  sum(bitbucket_ansible_playbook_run_success)
+  sum(github_ansible_playbook_run_success)
 /
-  (sum(bitbucket_ansible_playbook_run_success) + sum(bitbucket_ansible_playbook_run_failure))
+  (sum(github_ansible_playbook_run_success) + sum(github_ansible_playbook_run_failure))
 ```
 
 ### Time since last run
 ```promql
-time() - bitbucket_ansible_playbook_last_run_timestamp_seconds{repo="mf"}
+time() - github_ansible_playbook_last_run_timestamp_seconds{repo="mf"}
 ```
 *Alert if this exceeds your expected pipeline cadence.*
 
 ### Latest pipeline duration
 ```promql
-bitbucket_ansible_playbook_latest_duration_seconds{repo="mf"}
+github_ansible_playbook_latest_duration_seconds{repo="mf"}
 ```
 
 ### Average duration by playbook
 ```promql
-avg by (playbook) (bitbucket_ansible_playbook_run_duration_seconds)
+avg by (playbook) (github_ansible_playbook_run_duration_seconds)
 ```
 
 ### Pipeline runs by playbook (bar chart)
 ```promql
-sum by (playbook) (bitbucket_ansible_playbook_run_success)
+sum by (playbook) (github_ansible_playbook_run_success)
 ```
 
 ---
@@ -205,7 +205,7 @@ groups:
           description: "Student {{ $labels.student }} ran {{ $labels.jcl }}"
 
       - alert: PipelineNotRunning
-        expr: time() - bitbucket_ansible_playbook_last_run_timestamp_seconds > 86400
+        expr: time() - github_ansible_playbook_last_run_timestamp_seconds > 86400
         for: 0m
         labels:
           severity: info
@@ -227,10 +227,10 @@ groups:
 
 | Label | Appears on | Description |
 |---|---|---|
-| `playbook` | `bitbucket_ansible_*` | Ansible playbook filename |
-| `repo` | `bitbucket_ansible_*` | Bitbucket repo slug |
-| `branch` | `bitbucket_ansible_*` | Git branch |
-| `build` | `bitbucket_ansible_run_*` | Bitbucket build number |
+| `playbook` | `github_ansible_*` | Ansible playbook filename |
+| `repo` | `github_ansible_*` | GitHub repo name |
+| `branch` | `github_ansible_*` | Git branch |
+| `build` | `github_ansible_run_*` | GitHub Actions run number |
 | `student` | `zos_job_*` | STUDENT_ID from pipeline variable |
 | `jcl` | `zos_job_*` | JCL filename that was submitted |
 | `job_id` | `zos_job_*` | z/OS job ID (e.g. JOB00123) |
