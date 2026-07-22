@@ -45,8 +45,10 @@ jobs:
           ANSIBLE_COLLECTIONS_PATHS: /root/.ansible/collections
           PYTHONPATH: /root/.ansible/collections
         run: |
-          printf '%s\n' "$ID_RSA" > /tmp/id_rsa
-          chmod 600 /tmp/id_rsa
+          mkdir -p .ssh
+          chmod 700 .ssh
+          printf '%s\n' "$ID_RSA" > .ssh/id_rsa
+          chmod 600 .ssh/id_rsa
           export ANSIBLE_HOST_KEY_CHECKING=False
 
           export START_TIME=$(date +%s)
@@ -56,7 +58,7 @@ jobs:
           ansible-playbook \
             -u ibmuser \
             -i inventory.yml \
-            --private-key /tmp/id_rsa \
+            --private-key .ssh/id_rsa \
             -e "jcl_file=${JCL_FILE} student_id=${STUDENT_ID}" \
             ${PLAYBOOK_NAME}
 
@@ -119,7 +121,7 @@ jobs:
             ansible-playbook \
               -u ibmuser \
               -i inventory.yml \
-              --private-key /tmp/id_rsa \
+              --private-key .ssh/id_rsa \
               gather_mf_metrics.yml
 
             if [ -f mf_metrics.prom ]; then
