@@ -48,3 +48,5 @@ Thumbs.db
 *.mov
 *.wmv
 
+# don't put ssh key in repo
+*.ssh

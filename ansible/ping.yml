@@ -13,4 +13,4 @@
 
     - name: Response 
       debug:
-        msg: "{{ result.ping }}"      
+        msg: "{{ result.ping }}"
