@@ -1,0 +1,91 @@
+---
+# Non-fatal JCL runner. This playbook records job metrics even when
+# submitted jobs return non-zero RC values.
+- name: Submit JCL from jcl/ directory (non-fatal)
+  hosts: zos
+  gather_facts: false
+  collections:
+    - ibm.ibm_zos_core
+  environment: "{{ environment_vars }}"
+
+  tasks:
+    - name: Validate jcl_file is set
+      fail:
+        msg: "jcl_file is required. Set the JCL_FILE pipeline variable."
+      when: jcl_file is not defined or jcl_file == ""
+
+    - name: Derive student-scoped naming variables
+      set_fact:
+        student_id_upper: "{{ student_id | upper if (student_id is defined and student_id != '') else '' }}"
+        job_prefix: "{{ (student_id | upper)[:5] if (student_id is defined and student_id != '') else '' }}"
+        ds_hlq: >-
+          {{ 'IBMUSER.' + (student_id | upper)
+             if (student_id is defined and student_id != '')
+             else 'IBMUSER' }}
+
+    - name: Render JCL template and copy to USS
+      zos_copy:
+        content: "{{ lookup('template', playbook_dir + '/jcl/' + jcl_file) }}"
+        dest: "/u/ibmuser/{{ jcl_file }}"
+        force: true
+
+    - name: Submit job (non-fatal for high RC)
+      zos_job_submit:
+        src: "/u/ibmuser/{{ jcl_file }}"
+        location: USS
+        wait_time_s: 60
+        return_output: true
+        max_rc: 4095
+      register: job_output
+
+    - name: Job ID and return code
+      debug:
+        msg: "Job {{ job_output.jobs[0].job_id }} completed RC={{ job_output.jobs[0].ret_code.msg }}"
+
+    - name: Spool output
+      debug:
+        msg: "{{ job_output.jobs[0].ddnames | map(attribute='content') | list }}"
+
+    - name: Parse job output into metric values
+      set_fact:
+        _job_id: "{{ job_output.jobs[0].job_id }}"
+        _job_name: "{{ job_output.jobs[0].job_name | default('UNKNOWN') }}"
+        _rc_num: >-
+          {{ job_output.jobs[0].ret_code.msg
+             | regex_replace('^CC\s+0*(\d+)$', '\1') | int
+             if job_output.jobs[0].ret_code.msg is match('^CC\s+\d+$')
+             else -1 }}
+        _success: >-
+          {{ 1 if (job_output.jobs[0].ret_code.msg is match('^CC\s+\d+$')
+                   and (job_output.jobs[0].ret_code.msg
+                        | regex_replace('^CC\s+0*(\d+)$', '\1') | int) <= 4)
+             else 0 }}
+
+    - name: Concatenate all spool content for parsing
+      set_fact:
+        _spool_text: >-
+          {{ job_output.jobs[0].ddnames
+             | map(attribute='content') | list | flatten | join('\n') }}
+
+    - name: Parse record counts from spool
+      set_fact:
+        _records_in:  "{{ (_spool_text | regex_search('RECORDS[^\\n]*IN[:\\s=]+(\\d+)', '\\1') or ['0']) | first }}"
+        _records_out: "{{ (_spool_text | regex_search('RECORDS[^\\n]*OUT[:\\s=]+(\\d+)', '\\1') or ['0']) | first }}"
+
+    - name: Write job_metrics.prom
+      copy:
+        dest: "{{ playbook_dir }}/job_metrics.prom"
+        content: |
+          # HELP zos_job_return_code z/OS job numeric return code (-1 = ABEND or unknown)
+          # TYPE zos_job_return_code gauge
+          zos_job_return_code{job_id="{{ _job_id }}",job_name="{{ _job_name }}",student="{{ student_id_upper }}",jcl="{{ jcl_file }}"} {{ _rc_num }}
+          # HELP zos_job_success 1 if job completed with RC<=4 (z/OS success/warning convention)
+          # TYPE zos_job_success gauge
+          zos_job_success{job_id="{{ _job_id }}",job_name="{{ _job_name }}",student="{{ student_id_upper }}",jcl="{{ jcl_file }}"} {{ _success }}
+          # HELP zos_job_records_in Input records processed by the job (from spool; 0 if not available)
+          # TYPE zos_job_records_in gauge
+          zos_job_records_in{job_id="{{ _job_id }}",job_name="{{ _job_name }}",student="{{ student_id_upper }}",jcl="{{ jcl_file }}"} {{ _records_in }}
+          # HELP zos_job_records_out Output records written by the job (from spool; 0 if not available)
+          # TYPE zos_job_records_out gauge
+          zos_job_records_out{job_id="{{ _job_id }}",job_name="{{ _job_name }}",student="{{ student_id_upper }}",jcl="{{ jcl_file }}"} {{ _records_out }}
+      delegate_to: localhost
