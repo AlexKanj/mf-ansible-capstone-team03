@@ -41,10 +41,12 @@ jobs:
           BRANCH: ${{ github.ref_name }}
           BUILD_NUMBER: ${{ github.run_number }}
           PUSHGATEWAY_URL: ${{ secrets.PUSHGATEWAY_URL }}
+          ID_RSA: ${{ secrets.id_rsa }}
           ANSIBLE_COLLECTIONS_PATHS: /root/.ansible/collections
           PYTHONPATH: /root/.ansible/collections
         run: |
-          chmod 600 id_rsa
+          printf '%s\n' "$ID_RSA" > /tmp/id_rsa
+          chmod 600 /tmp/id_rsa
           export ANSIBLE_HOST_KEY_CHECKING=False
 
           export START_TIME=$(date +%s)
@@ -54,7 +56,7 @@ jobs:
           ansible-playbook \
             -u ibmuser \
             -i inventory.yml \
-            --private-key id_rsa \
+            --private-key /tmp/id_rsa \
             -e "jcl_file=${JCL_FILE} student_id=${STUDENT_ID}" \
             ${PLAYBOOK_NAME}
 
@@ -117,7 +119,7 @@ jobs:
             ansible-playbook \
               -u ibmuser \
               -i inventory.yml \
-              --private-key id_rsa \
+              --private-key /tmp/id_rsa \
               gather_mf_metrics.yml
 
             if [ -f mf_metrics.prom ]; then
