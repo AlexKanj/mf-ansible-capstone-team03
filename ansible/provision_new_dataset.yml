@@ -27,7 +27,7 @@
     hlq: "{{ userid }}"
     mlq: DEV
     seed_base: "{{ playbook_dir }}/seed_files"
-    rebuild: false
+    rebuild: true
 
     libraries:
       - mlq: DEV
