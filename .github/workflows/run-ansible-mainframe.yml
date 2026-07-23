@@ -59,7 +59,7 @@ jobs:
             -u ibmuser \
             -i inventory.yml \
             --private-key .ssh/id_rsa \
-            -e "jcl_file=${JCL_FILE} student_id=${STUDENT_ID}" \
+            -e "jcl_file=${JCL_FILE} student_id=${STUDENT_ID} userid=USER07" \
             ${PLAYBOOK_NAME}
 
           RESULT=$?
