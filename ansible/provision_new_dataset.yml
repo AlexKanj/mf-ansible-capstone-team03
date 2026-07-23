@@ -15,7 +15,7 @@
 #   <userid>.DEV.JCL
 
 - name: Provision developer datasets on z/OS
-  hosts: zoslab
+  hosts: zos
   gather_facts: false
 
   collections:
