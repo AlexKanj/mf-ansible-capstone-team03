@@ -1,0 +1,122 @@
+---
+- name: Manage RACF data set profiles
+  hosts: zoslab
+  gather_facts: false
+
+  collections:
+    - ibm.ibm_zos_core
+
+  environment: "{{ environment_vars }}"
+
+  vars_files:
+    - racf_vars.yml
+
+  vars:
+    racf_action_effective: "{{ racf_action | default('delete') }}"
+
+  tasks:
+    - name: Delete generic RACF data set profiles
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "DELDSD '{{ item.userid }}.**' GENERIC"
+        max_rc: 8
+      loop: "{{ dataset_profiles }}"
+      loop_control:
+        label: "{{ item.userid }}.**"
+      register: delete_profile_results
+      failed_when: false
+      when: racf_action_effective == 'delete'
+
+    - name: Show profile deletion results
+      ansible.builtin.debug:
+        msg:
+          profile: "{{ item.item.userid }}.**"
+          output: "{{ item.output | default([]) }}"
+          message: "{{ item.msg | default('') }}"
+          failed: "{{ item.failed | default(false) }}"
+          changed: "{{ item.changed | default(false) }}"
+      loop: "{{ delete_profile_results.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.userid }}.**"
+      when: racf_action_effective == 'delete'
+
+    - name: Refresh generic data set profiles after deletion
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "SETROPTS GENERIC(DATASET) REFRESH"
+      when: racf_action_effective == 'delete'
+
+    - name: Create generic RACF data set profiles
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - >-
+            ADDSD '{{ item.userid }}.**'
+            OWNER({{ item.userid }})
+            UACC({{ profile_uacc }})
+      loop: "{{ dataset_profiles }}"
+      loop_control:
+        label: "{{ item.userid }}.**"
+      register: create_profile_results
+      when: racf_action_effective == 'create'
+
+    - name: Show profile creation results
+      ansible.builtin.debug:
+        msg:
+          profile: "{{ item.item.userid }}.**"
+          output: "{{ item.output | default([]) }}"
+      loop: "{{ create_profile_results.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.userid }}.**"
+      when: racf_action_effective == 'create'
+
+    - name: Grant users access to their data set profiles
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - >-
+            PERMIT '{{ item.userid }}.**'
+            ID({{ item.userid }})
+            ACCESS({{ item.access }})
+            GENERIC
+      loop: "{{ dataset_profiles }}"
+      loop_control:
+        label: "{{ item.userid }} -> {{ item.access }}"
+      register: permit_results
+      when: racf_action_effective == 'create'
+
+    - name: Show PERMIT results
+      ansible.builtin.debug:
+        msg:
+          permission: "{{ item.item.userid }} -> {{ item.item.access }}"
+          profile: "{{ item.item.userid }}.**"
+          output: "{{ item.output | default([]) }}"
+      loop: "{{ permit_results.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.userid }} -> {{ item.item.access }}"
+      when: racf_action_effective == 'create'
+
+    - name: Refresh generic data set profiles
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "SETROPTS GENERIC(DATASET) REFRESH"
+      when: racf_action_effective == 'create'
+
+    - name: Verify RACF data set profiles
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "LISTDSD DATASET('{{ item.userid }}.**') GENERIC ALL"
+      loop: "{{ dataset_profiles }}"
+      loop_control:
+        label: "{{ item.userid }}.**"
+      register: verify_profile_results
+      when: racf_action_effective == 'create'
+
+    - name: Show LISTDSD results
+      ansible.builtin.debug:
+        msg:
+          profile: "{{ item.item.userid }}.**"
+          expected_access: "{{ item.item.access }}"
+          output: "{{ item.output | default([]) }}"
+      loop: "{{ verify_profile_results.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.userid }}.**"
+      when: racf_action_effective == 'create'

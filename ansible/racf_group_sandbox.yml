@@ -1,0 +1,163 @@
+---
+- name: Experiment with RACF group commands
+  hosts: zoslab
+  gather_facts: false
+
+  collections:
+    - ibm.ibm_zos_core
+
+  environment: "{{ environment_vars }}"
+
+  vars_files:
+    - racf_vars.yml
+
+  tasks:
+    - name: Display RACF group definitions
+      ansible.builtin.debug:
+        var: racf_groups
+
+    - name: Delete existing users
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "DELUSER {{ item.1 }}"
+      loop: "{{ users | dict2items | subelements('value') }}" # loop over users using key as groups to be added and value as users to be added
+      loop_control:
+        label: "{{ item.1 }}"
+      register: deluser_results
+      failed_when: false
+
+    - name: Show user deletion results
+      ansible.builtin.debug:
+        msg:
+          user: "{{ item.item.1 }}"
+          output: "{{ item.output | default([]) }}"
+          message: "{{ item.msg | default('') }}"
+          failed: "{{ item.failed | default(false) }}"
+          changed: "{{ item.changed | default(false) }}"
+      loop: "{{ deluser_results.results }}"
+      loop_control:
+        label: "{{ item.item.1 }}"
+
+    # Reverse order because child groups must be deleted before parents.
+    - name: Delete RACF groups if they already exist
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "DELGROUP {{ item.identity.name }}"
+        max_rc: 8
+      loop: "{{ racf_groups | reverse | list }}"
+      loop_control:
+        label: "{{ item.identity.name }}"
+      register: initial_delete_results
+      failed_when: false
+
+    - name: Show initial deletion results
+      ansible.builtin.debug:
+        msg:
+          group: "{{ item.item.identity.name }}"
+          output: "{{ item.output }}"
+      loop: "{{ initial_delete_results.results }}"
+      loop_control:
+        label: "{{ item.item.identity.name }}"
+
+    # Normal order because parent groups must be created before children.
+    - name: Create RACF groups
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - >-
+            ADDGROUP {{ item.identity.name }}
+            OWNER({{ item.hierarchy.owner }})
+            SUPGROUP({{ item.hierarchy.superior_group }})
+            OMVS(GID({{ item.omvs.gid }}))
+      loop: "{{ racf_groups }}"
+      loop_control:
+        label: "{{ item.identity.name }}"
+      register: addgroup_results
+
+    - name: Show ADDGROUP results
+      ansible.builtin.debug:
+        msg:
+          group: "{{ item.item.identity.name }}"
+          output: "{{ item.output }}"
+      loop: "{{ addgroup_results.results }}"
+      loop_control:
+        label: "{{ item.item.identity.name }}"
+
+
+
+    - name: Create users
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "ADDUSER {{ item.1 }} PASSWORD({{ item.1 }}) OWNER(IBMUSER) DFLTGRP({{ item.0.key }}) TSO(ACCTNUM(ACCT001) PROC(DB13PROC) SIZE(2096128))"
+      loop: "{{ users | dict2items | subelements('value') }}" # loop over users using key as groups to be added and value as users to be added
+      loop_control:
+        label: "{{ item.1 }}"
+      register: adduser_results
+      failed_when: false
+
+    - name: Show ADDUSER results
+      ansible.builtin.debug:
+        msg:
+          user: "{{ item.item.1 }}"
+          output: "{{ item.output }}"
+      loop: "{{ adduser_results.results }}"
+      loop_control:
+        label: "{{ item.item.1 }}"
+
+    - name: Verify RACF groups
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "LISTGRP {{ item.identity.name }} OMVS"
+      loop: "{{ racf_groups }}"
+      loop_control:
+        label: "{{ item.identity.name }}"
+      register: listgrp_results
+
+    - name: Verify users
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "LISTUSER {{ item.1 }}"
+      loop: "{{ users | dict2items | subelements('value') }}"
+      loop_control:
+        label: "{{ item.1 }}"
+      register: listuser_results
+
+    - name: Show LISTGRP results
+      ansible.builtin.debug:
+        msg:
+          group: "{{ item.item.identity.name }}"
+          output: "{{ item.output }}"
+      loop: "{{ listgrp_results.results }}"
+      loop_control:
+        label: "{{ item.item.identity.name }}"
+
+    - name: Build RACF group information
+      ansible.builtin.set_fact:
+        racf_group_report: >-
+          {{
+            racf_group_report | default({}) |
+            combine({
+              item.item.identity.name: {
+                'created': (
+                  (item.output[0].content | join(' '))
+                  | regex_search('CREATED=([0-9.]+)', '\1')
+                  | default('')
+                ),
+                'installation_data':
+                  item.item.installation_data | default(''),
+                'subgroups':
+                  item.item.subgroups | default([]),
+                'connected_users':
+                  item.item.connected_users | default([]),
+                'raw_output':
+                  item.output[0].content
+              }
+            })
+          }}
+      loop: "{{ listgrp_results.results }}"
+      loop_control:
+        label: "{{ item.item.identity.name }}"
+
+    - name: Display RACF group report
+      ansible.builtin.debug:
+        var: racf_group_report
+

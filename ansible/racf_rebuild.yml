@@ -1,0 +1,10 @@
+---
+- import_playbook: racf_dataset_profiles.yml
+  vars:
+    racf_action: delete
+
+- import_playbook: racf_group_sandbox.yml
+
+- import_playbook: racf_dataset_profiles.yml
+  vars:
+    racf_action: create

@@ -1,0 +1,95 @@
+---
+users:
+  D03GPT:
+    - U03D01
+    - U03D02
+  T03GPT:
+    - U03T01
+  P03PTG:
+    - P03PTU
+
+racf_groups:
+  - identity:
+      name: D03GRP
+    hierarchy:
+      owner: IBMUSER
+      superior_group: SYS1
+    omvs:
+      gid: 8031
+    installation_data: ""
+    model_data_set: ""
+    metadata:
+      created: ""
+    subgroups: []
+    connected_users: []
+
+  - identity:
+      name: D03GPT
+    hierarchy:
+      owner: IBMUSER
+      superior_group: D03GRP
+    omvs:
+      gid: 8032
+    installation_data: ""
+    model_data_set: ""
+    metadata:
+      created: ""
+    subgroups: []
+    connected_users: []
+
+  - identity:
+      name: T03GPT
+    hierarchy:
+      owner: IBMUSER
+      superior_group: D03GRP
+    omvs:
+      gid: 8033
+    installation_data: ""
+    model_data_set: ""
+    metadata:
+      created: ""
+    subgroups: []
+    connected_users: []
+
+  - identity:
+      name: P03APPS
+    hierarchy:
+      owner: IBMUSER
+      superior_group: SYS1
+    omvs:
+      gid: 8034
+    installation_data: ""
+    model_data_set: ""
+    metadata:
+      created: ""
+    subgroups: []
+    connected_users: []
+
+  - identity:
+      name: P03PTG
+    hierarchy:
+      owner: IBMUSER
+      superior_group: P03APPS
+    omvs:
+      gid: 8035
+    installation_data: ""
+    model_data_set: ""
+    metadata:
+      created: ""
+    subgroups: []
+    connected_users: []
+
+dataset_profiles:
+  - userid: U03D01
+    access: ALTER
+
+  - userid: U03D02
+    access: ALTER
+
+  - userid: U03T01
+    access: UPDATE
+
+  - userid: P03PTU
+    access: UPDATE
+
+profile_uacc: NONE
