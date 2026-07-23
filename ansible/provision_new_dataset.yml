@@ -1,0 +1,135 @@
+---
+# Provision and seed DEV/TST source libraries for a z/OS user.
+#
+# Usage:
+#   ansible-playbook job1.yml -e "userid=<USER07|USER08|USER09>"
+#
+# Creates:
+#   <userid>.DEV.COBOL
+#   <userid>.DEV.JCL
+#   <userid>.TST.COBOL
+#   <userid>.TST.JCL
+#
+# Seeds:
+#   <userid>.DEV.COBOL
+#   <userid>.DEV.JCL
+
+- name: Provision developer datasets on z/OS
+  hosts: zoslab
+  gather_facts: false
+
+  collections:
+    - ibm.ibm_zos_core
+
+  environment: "{{ environment_vars }}"
+
+  vars:
+    hlq: "{{ userid }}"
+    mlq: DEV
+    seed_base: "{{ playbook_dir }}/seed_files"
+    rebuild: false
+
+    libraries:
+      - mlq: DEV
+        libname: COBOL
+        primary_allocation: 5
+        secondary_allocation: 5
+
+      - mlq: DEV
+        libname: JCL
+        primary_allocation: 2
+        secondary_allocation: 4
+
+      - mlq: TST
+        libname: COBOL
+        primary_allocation: 5
+        secondary_allocation: 5
+
+      - mlq: TST
+        libname: JCL
+        primary_allocation: 2
+        secondary_allocation: 4
+
+  tasks:
+    - name: Validate userid is provided and is allowed
+      ansible.builtin.assert:
+        that:
+          - userid is defined
+          - userid in ['USER07', 'USER08', 'USER09']
+        fail_msg: >
+          A valid userid must be passed on the command line:
+          ansible-playbook job1.yml -e "userid=<USER07|USER08|USER09>"
+
+    - name: Delete existing datasets only rebuild is requested
+      ibm.ibm_zos_core.zos_data_set:
+        name: "{{ hlq }}.{{ item.mlq }}.{{ item.libname }}"
+        state: absent
+      loop: "{{ libraries }}"
+      when: rebuild | bool
+      loop_control:
+        label: "{{ hlq }}.{{ item.mlq }}.{{ item.libname }}"
+
+    - name: Allocate new partitioned dataset
+      ibm.ibm_zos_core.zos_data_set:
+        name: "{{ hlq }}.{{ item.mlq }}.{{ item.libname }}"
+        state: present
+        type: pds
+        record_format: fb
+        record_length: 80
+        block_size: 0
+        space_primary: "{{ item.primary_allocation }}"
+        space_secondary: "{{ item.secondary_allocation }}"
+        space_type: trk
+      loop: "{{ libraries }}"
+      loop_control:
+        label: "{{ hlq }}.{{ item.mlq }}.{{ item.libname }}"
+
+    - name: Warm up remote session
+      ansible.builtin.command: /bin/true
+      changed_when: false
+
+    - name: Seed DEV COBOL and JCL libraries
+      ansible.builtin.include_role:
+        name: zos_seed_library
+      vars:
+        library: "{{ item }}"
+      loop:
+        - COBOL
+        - JCL
+      loop_control:
+        label: "{{ hlq }}.{{ mlq }}.{{ item }}"
+
+    - name: Verify COBOL members
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "LISTDS '{{ hlq }}.DEV.COBOL' MEMBERS"
+      register: cobol
+      tags:
+        - verify
+
+    - name: Verify JCL members
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "LISTDS '{{ hlq }}.DEV.JCL' MEMBERS"
+      register: jcl
+      tags:
+        - verify
+
+    - name: Show COBOL members
+      ansible.builtin.debug:
+        var: cobol.output
+      tags:
+        - verify
+
+    - name: Show JCL members
+      ansible.builtin.debug:
+        var: jcl.output
+      tags:
+        - verify
+
+    - name: Report provisioned datasets
+      ansible.builtin.debug:
+        msg: "Provisioned: {{ hlq }}.{{ item.mlq }}.{{ item.libname }}"
+      loop: "{{ libraries }}"
+      loop_control:
+        label: "{{ hlq }}.{{ item.mlq }}.{{ item.libname }}"
