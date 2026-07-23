@@ -161,3 +161,42 @@
       ansible.builtin.debug:
         var: racf_group_report
 
+    - name: Write RACF metrics
+      ansible.builtin.copy:
+        dest: racf_metrics.prom
+        mode: "0644"
+        content: |
+          # HELP zos_racf_users_total Number of managed RACF users
+          # TYPE zos_racf_users_total gauge
+          zos_racf_users_total {{ users | dict2items | map(attribute='value') | flatten | unique | length }}
+
+          # HELP zos_racf_groups_total Number of managed RACF groups
+          # TYPE zos_racf_groups_total gauge
+          zos_racf_groups_total {{ racf_groups | length }}
+
+          # HELP zos_racf_user_present Whether a RACF user is present in its assigned group
+          # TYPE zos_racf_user_present gauge
+          {% for group_name, group_users in users.items() %}
+          {% for userid in group_users %}
+          zos_racf_user_present{userid="{{ userid }}",group="{{ group_name }}"} 1
+          {% endfor %}
+          {% endfor %}
+
+          # HELP zos_racf_group_present Whether a managed RACF group is present
+          # TYPE zos_racf_group_present gauge
+          {% for group in racf_groups %}
+          zos_racf_group_present{group="{{ group.identity.name }}",owner="{{ group.hierarchy.owner }}",superior_group="{{ group.hierarchy.superior_group }}",gid="{{ group.omvs.gid }}"} 1
+          {% endfor %}
+
+          # HELP zos_racf_dataset_access Desired dataset access assigned to a RACF user
+          # TYPE zos_racf_dataset_access gauge
+          {% for profile in dataset_profiles %}
+          zos_racf_dataset_access{userid="{{ profile.userid }}",access="{{ profile.access }}"} 1
+          {% endfor %}
+
+          # HELP zos_racf_profile_uacc RACF dataset profile universal access setting
+          # TYPE zos_racf_profile_uacc gauge
+          zos_racf_profile_uacc{uacc="{{ profile_uacc }}"} 1
+      delegate_to: localhost
+      run_once: true
+

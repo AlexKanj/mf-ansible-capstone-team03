@@ -67,3 +67,32 @@
         label: "{{ target_user }}"
       vars:
         hlq: "{{ target_user }}"
+
+    - name: Write provisioning metrics
+      ansible.builtin.copy:
+        dest: provision_metrics.prom
+        mode: "0644"
+        content: |
+          # HELP zos_provision_users_total Number of users included in this provisioning run
+          # TYPE zos_provision_users_total gauge
+          zos_provision_users_total {{ target_users | length }}
+
+          # HELP zos_provision_datasets_expected Number of datasets expected for each user
+          # TYPE zos_provision_datasets_expected gauge
+          {% for target_user in target_users %}
+          zos_provision_datasets_expected{userid="{{ target_user }}"} {{ libraries | length }}
+          {% endfor %}
+
+          # HELP zos_user_dataset_ready Whether a user dataset was successfully provisioned
+          # TYPE zos_user_dataset_ready gauge
+          {% for target_user in target_users %}
+          {% for library in libraries %}
+          zos_user_dataset_ready{userid="{{ target_user }}",dataset="{{ target_user }}.{{ library.mlq }}.{{ library.libname }}",environment="{{ library.mlq }}",library_type="{{ library.libname }}"} 1
+          {% endfor %}
+          {% endfor %}
+
+          # HELP zos_provision_rebuild_requested Whether rebuilding existing datasets was requested
+          # TYPE zos_provision_rebuild_requested gauge
+          zos_provision_rebuild_requested {{ 1 if rebuild | bool else 0 }}
+      delegate_to: localhost
+      run_once: true

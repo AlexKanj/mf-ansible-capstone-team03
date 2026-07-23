@@ -116,6 +116,17 @@ jobs:
             cat job_metrics.prom >> metrics.prom
           fi
 
+          # Append RACF metrics when the RACF playbook creates them
+          if [ -f racf_metrics.prom ]; then
+            cat racf_metrics.prom >> metrics.prom
+          fi
+
+          # Append provisioning metrics when the provisioning playbook creates them
+          if [ -f provision_metrics.prom ]; then
+            cat provision_metrics.prom >> metrics.prom
+          fi
+
+
           # Optionally run the system metrics playbook
           if [ "${RUN_MF_METRICS}" = "true" ]; then
             ansible-playbook \
