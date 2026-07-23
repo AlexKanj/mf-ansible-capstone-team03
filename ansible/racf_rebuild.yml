@@ -8,3 +8,5 @@
 - import_playbook: racf_dataset_profiles.yml
   vars:
     racf_action: create
+
+- import_playbook: provision_new_dataset.yml
