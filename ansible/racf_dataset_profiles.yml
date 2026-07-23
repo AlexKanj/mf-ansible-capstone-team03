@@ -1,6 +1,6 @@
 ---
 - name: Manage RACF data set profiles
-  hosts: zoslab
+  hosts: zos
   gather_facts: false
 
   collections:

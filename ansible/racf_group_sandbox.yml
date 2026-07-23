@@ -1,6 +1,6 @@
 ---
 - name: Experiment with RACF group commands
-  hosts: zoslab
+  hosts: zos
   gather_facts: false
 
   collections:
