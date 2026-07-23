@@ -20,12 +20,15 @@
     - name: List all IBMUSER catalog entries
       zos_tso_command:
         commands:
-          - LISTCAT LEVEL('IBMUSER')
+          - "LISTCAT LEVEL('U03D01')"
+          - "LISTCAT LEVEL('U03D02')"
+          - "LISTCAT LEVEL('U03T01')"
+          - "LISTCAT LEVEL('P03PTU')"
       register: listcat_result
 
     - name: Parse dataset names and types from LISTCAT output
       set_fact:
-        _listcat_text: "{{ listcat_result.output[0].content | join('\n') }}"
+        _listcat_text: "{{ listcat_result.output | map(attribute='content') | flatten | join('\n') }}"
 
     - name: Extract dataset list (type + name pairs)
       set_fact:
