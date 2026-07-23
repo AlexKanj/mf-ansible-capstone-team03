@@ -3,7 +3,7 @@
 #
 # Usage:
 #   ansible-playbook provision_new_dataset.yml
-#   ansible-playbook provision_new_dataset.yml -e "userid=<USER07|USER08|USER09>"
+#   ansible-playbook provision_new_dataset.yml -e "userid=<xxx>"
 #
 # Creates:
 #   <userid>.DEV.COBOL
