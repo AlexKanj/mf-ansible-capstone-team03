@@ -1,0 +1,27 @@
+---
+
+# debug
+- name: Show library
+  ansible.builtin.debug:
+    var: library
+# end debug
+
+- name: Find members for {{ library }}
+  ansible.builtin.find:
+    paths: "{{ seed_base }}/{{ library }}"
+    recurse: false
+    file_type: file
+  delegate_to: localhost
+  register: member_files
+
+# debug
+- name: Show members found
+  ansible.builtin.debug:
+    var: member_files.files
+# end debug
+
+- name: Copy members
+  ansible.builtin.include_tasks: copy_members.yml
+  loop: "{{ member_files.files }}"
+  loop_control:
+    loop_var: member
