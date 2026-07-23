@@ -1,0 +1,32 @@
+---
+
+# debug
+- name: Show library
+  ansible.builtin.debug:
+    var: library
+# end debug
+
+- name: Find members for {{ library }}
+  ansible.builtin.find:
+    paths: "{{ seed_base }}/{{ library }}"
+    recurse: false
+    file_type: file
+  delegate_to: localhost
+  register: member_files_all
+
+- name: Limit to one member when testing
+  ansible.builtin.set_fact:
+    member_files: >-
+      {{ member_files_all if (rebuild | default(false) | bool) else member_files_all | combine({'files': member_files_all.files[:1]}) }}
+
+# debug
+- name: Show members found
+  ansible.builtin.debug:
+    var: member_files.files
+# end debug
+
+- name: Copy members
+  ansible.builtin.include_tasks: copy_members.yml
+  loop: "{{ member_files.files }}"
+  loop_control:
+    loop_var: member

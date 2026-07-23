@@ -1,0 +1,27 @@
+---
+# debug
+- name: Show destination
+  debug:
+    msg:
+      "{{ hlq }}.{{ mlq }}.{{ library }}({{ member.path | basename | splitext | first | upper }})"
+# end debug
+
+- name: Copy {{ member.path | basename }} to {{ library }}
+  block:
+    - name: Copy member
+      ibm.ibm_zos_core.zos_copy:
+        src: "{{ member.path }}"
+        dest: >-
+          {{ hlq }}.{{ mlq }}.{{ library }}({{ member.path | basename | splitext | first | upper }})
+        remote_src: false
+        force: true
+        encoding:
+          from: UTF-8
+          to: IBM-1047
+      register: copy_result
+  rescue:
+    - name: Report failure
+      ansible.builtin.debug:
+        msg: >
+          FAILED: "{{ member.path | basename }}" -> "{{ hlq }}.{{ mlq }}.{{ library }}"
+          Reason: "{{ ansible_failed_result.msg }}
