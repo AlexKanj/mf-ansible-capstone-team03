@@ -20,7 +20,7 @@
     - name: List all IBMUSER catalog entries
       zos_tso_command:
         commands:
-          - LISTCAT ENTRIES('IBMUSER')
+          - LISTCAT LEVEL('IBMUSER')
       register: listcat_result
 
     - name: Parse dataset names and types from LISTCAT output

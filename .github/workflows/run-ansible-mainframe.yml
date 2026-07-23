@@ -132,6 +132,6 @@ jobs:
           cat metrics.prom
 
           curl --data-binary @metrics.prom \
-            "${PUSHGATEWAY_URL}/metrics/job/github_ansible/playbook/${PLAYBOOK_NAME}/repo/${REPO_SLUG}/build/${BUILD_NUMBER}"
+            "${PUSHGATEWAY_URL}/metrics/job/github_ansible/playbook/${PLAYBOOK_NAME}/repo/${REPO_SLUG}
 
           exit $RESULT
