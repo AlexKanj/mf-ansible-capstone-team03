@@ -32,7 +32,7 @@ on:
         default: run_jcl.yml
         required: true
       JCL_FILE:
-        description: JCL file to submit (required for run_jcl.yml and run_jcl_nonfatal.yml)
+        description: JCL file to submit (required for run_jcl)
         type: choice
         options:
           - create_customer_file.jcl
