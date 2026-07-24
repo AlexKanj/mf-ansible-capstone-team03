@@ -50,3 +50,12 @@ Thumbs.db
 
 # don't put ssh key in repo
 *.ssh
+
+# Operations portal
+portal/api/.venv/
+portal/api/.env
+__pycache__/
+*.pyc
+portal/frontend/.env
+portal/frontend/node_modules/
+portal/frontend/dist/
