@@ -14,6 +14,8 @@ export type ManagedUser =
   | "U03T01"
   | "P03PTU";
 
+export type BooleanString = "true" | "false";
+
 export interface StatusValue {
   status: ComponentStatus;
   value: number | null;
@@ -51,4 +53,32 @@ export interface OverviewResponse {
     active_started_tasks: number | null;
     active_batch_jobs: number | null;
   };
+}
+
+export interface RunAutomationPayload {
+  playbook: string;
+  jcl_file: string;
+  student_id: string;
+  run_mf_metrics: BooleanString;
+  rebuild_racf: BooleanString;
+  rebuild_datasets: BooleanString;
+}
+
+export interface AutomationRunDispatchResponse {
+  status: string;
+  run_id?: number;
+  run_number?: number;
+  html_url?: string;
+}
+
+export interface AutomationRunStatusResponse {
+  run_id: number | null;
+  name: string | null;
+  status: string | null;
+  conclusion: string | null;
+  event: string | null;
+  run_number: number | null;
+  html_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }

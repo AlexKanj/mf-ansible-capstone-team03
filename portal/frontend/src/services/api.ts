@@ -1,6 +1,9 @@
 import type {
+  AutomationRunDispatchResponse,
+  AutomationRunStatusResponse,
   ManagedUser,
   OverviewResponse,
+  RunAutomationPayload,
 } from "../types/api";
 
 const API_BASE_URL = (
@@ -32,4 +35,56 @@ export async function getOverview(
   }
 
   return response.json() as Promise<OverviewResponse>;
+}
+
+export async function submitAutomationRun(
+  payload: RunAutomationPayload,
+): Promise<AutomationRunDispatchResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/automation-run`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    const message =
+      "Automation run request failed with HTTP " +
+      `${response.status}`;
+
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<AutomationRunDispatchResponse>;
+}
+
+export async function getAutomationRunStatus(
+  runId: number,
+  signal?: AbortSignal,
+): Promise<AutomationRunStatusResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/automation-run/${runId}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal,
+    },
+  );
+
+  if (!response.ok) {
+    const message =
+      "Automation status request failed with HTTP " +
+      `${response.status}`;
+
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<AutomationRunStatusResponse>;
 }

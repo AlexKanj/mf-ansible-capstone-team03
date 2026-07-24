@@ -8,6 +8,8 @@ import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
+from routes.automation_runs import router as automation_runs_router
+
 
 PROMETHEUS_URL = os.getenv("PROMETHEUS_URL", "").rstrip("/")
 
@@ -23,6 +25,8 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.include_router(automation_runs_router)
+
 # Allows the local React development server to call FastAPI.
 app.add_middleware(
     CORSMiddleware,
@@ -31,7 +35,7 @@ app.add_middleware(
         "http://127.0.0.1:5173",
     ],
     allow_credentials=False,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -172,11 +176,7 @@ async def get_overview(
 
     values = {
         name: get_numeric_value(result)
-        for name, result in zip(
-            query_names,
-            query_results,
-            strict=True,
-        )
+        for name, result in zip(query_names, query_results)
     }
 
     datasets_ready = values["datasets_ready"] or 0
