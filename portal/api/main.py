@@ -118,8 +118,10 @@ async def get_overview(
             '{playbook="run_jcl.yml"})'
         ),
         "racf_automation": (
-            'max(github_ansible_playbook_latest_success'
-            '{playbook="racf_verify.yml"})'
+            'max(github_ansible_playbook_latest_success{'
+            'playbook="racf_rebuild.yml",'
+            'repo="mf-ansible-capstone-team03"'
+            '})'
         ),
         "provisioning_automation": (
             'max(github_ansible_playbook_latest_success'
