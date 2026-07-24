@@ -78,7 +78,7 @@
                perform 1200-Business-Logic
                perform 1100-Read-Next-Input-Record
            end-perform
-           .            
+           .
        1100-Read-Next-Input-Record.
            read ESDS-Input-File
            if not ESDS-Input-OK and not ESDS-Input-EOF

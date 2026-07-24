@@ -1,46 +1,50 @@
        Identification Division.
-       Program-Id. KSDS1.
+       Program-Id. RRDS1.
       *****************************************************************
-      * Sandbox for demonstrating KSDS processing in batch.
+      * Sandbox for demonstrating RRDS processing in batch.
       *****************************************************************
        Environment Division.
        Input-Output Section.
        File-Control.
-           Select KSDS-File
-               Record Key FD-Rec-Key
-               Assign to "KSDSFL"
-               Organization Indexed
+           Select RRDS-File
+               Record Key RRN
+               Assign to "RRDSFL"
+               Organization Relative
                Access Dynamic
-               File Status KSDS-File-Status.
+               File Status RRDS-File-Status.
+           Select RRDS-File-Seq
+               Record Key RRN
+               Assign to "RRDSFL"
+               Organization Relative
+               Access Sequential
+               File Status RRDS-File-Status.
        Data Divsion.
        File Section.
-       FD  KSDS-File.
-       01  FD-KSDS-Record.
-           05  filler                     pic x(08).
-           05  FD-Rec-Key                 pic x(12).
-           05  filler                     pic x(60).
+       FD  RRDS-File.
+       01  FD-RRDS-Record                 pic x(80).
+       FD  RRDS-File-Seq.
+       01  FD-RRDS-Record-Seq             pic x(80).
        Working-Storage Section.
+       01  RRN                            pic 9(8).
        01  File-Status-Indicators.
-           05  KSDS-File-Status           pic x(02).
-               88  KSDS-OK                value "00".
-               88  KSDS-EOF               value "10".
-               88  KSDS-Duplicate-Key     value "22".
-               88  KSDS-Record-Not-Found  value "23".
+           05  RRDS-File-Status           pic x(02).
+               88  RRDS-OK                value "00".
+               88  RRDS-EOF               value "10".
+               88  RRDS-Duplicate-Key     value "22".
+               88  RRDS-Record-Not-Found  value "23".
        01  Record-Work-Areas.
-           05  KSDS-Record.
-               10  Rec-Date-Stamp         pic x(08).
-               10  Rec-Key                pic x(12).
-               10  Rec-Data               pic x(60).
+           05  RRDS-Record.
+               10  Rec-Data               pic x(80).
        01  Known-Record-Keys.
-           05  Key-1 pic x(12) value "JOHNSO001234".
-           05  Key-2 pic x(12) value "HARRIS004444".                    
-           05  key-3 pic x(12) value "KAMINS112233".
+           05  RRN-1                      pic 9(8) value 1.
+           05  RRN-2                      pic 9(8) value 2.
+           05  RRN-3                      pic 9(8) value 3.
        01  Error-Messages.
            05  Error-Message              pic x(132).
        01  Pseudo-Constants.
            05  Const-Got-Status           pic x(11) value "Got status".
            05  Const-On                   pic x(04) value " on".
-           05  Const-Of-DDNAME            pic x(11) value " of KSDSFL.".
+           05  Const-Of-DDNAME            pic x(11) value " of RRDSFL.".
            05  Const-OPEN                 pic x(04) value "OPEN".
            05  Const-CLOSE                pic x(05) value "CLOSE".
            05  Const-READ                 pic x(04) value "READ".
@@ -58,164 +62,153 @@
            .
        1000-Random.
       *****************************************************************
-      * Demonstrate COBOL code for KSDS random access.
+      * Demonstrate COBOL code for RRDS random access.
       *****************************************************************
            perform 1010-Open
 
-      * Read a record by key
-           
-           move Key-1 to FD-Rec-Key
-           perform 1100-Read-by-Primary-Key
+      * Read a record by Relative Record Number
 
-      * Update a record by key 
-       
+           move RRN-1 to RRN
+           perform 1100-Read-by-RRN
+
+      * Update the current record
+
            move "MODIFIED RECORD CONTENTS" to Rec-Data
-           rewrite FD-KSDS-Record
-               from KSDS-Record
+           rewrite FD-RRDS-Record
+               from RRDS-Record
            end-rewrite
-           perform 1100-Read-by-Primary-Key
+           perform 1100-Read-by-RRN
 
-      * Delete a record 
-       
-           move Key-1 to FD-Rec-Key
-           delete KSDS-File record
-           if KSDS-OK
+      * Delete a record
+
+           move RRN-1 to RRN
+           delete RRDS-File record
+           if RRDS-OK
                display "Got normal status on DELETE"
-               display "    with record key " Key-1
+               display "    with RRN " RRN
            else
                string Const-Got-Status delimited by size
-                      KSDS-File-Status delimited by size
+                      RRDS-File-Status delimited by size
                       Const-On         delimited by size
-                      Const-DELETE     delimited by size 
+                      Const-DELETE     delimited by size
                       Const-Of-DDNAME  delimited by size
                   into Error-Message
-               end-string 
+               end-string
                perform 8900-Scream-and-Die
                exit
            end-if
-           perform 1100-Read-by-Primary-Key
+           perform 1100-Read-by-RRN
+           perform 9000-Close
 
-      * Write (insert) a record 
-           
-           move Key-2 to Rec-Key 
-           move function current-date to Rec-Date-Stamp
-           move "INSERTED THIS RECORD" to Rec-Data
-           write FD-KSDS-Record
-               from KSDS-Record
-           end-write    
-           if KSDS-OK
+      * Write (append) a record
+
+           open extend RRDS-File-Seq
+           move zero to RRN
+           move "APPENDED THIS RECORD" to Rec-Data
+           write FD-RRDS-Record-Seq
+               from RRDS-Record
+           end-write
+           if RRDS-OK
                display "Got normal status on WRITE"
-               display "    with record key " Key-2
+               display "    with RRN " RRN
            else
                string Const-Got-Status delimited by size
-                      KSDS-File-Status delimited by size
+                      RRDS-File-Status delimited by size
                       Const-On         delimited by size
-                      Const-WRITE      delimited by size 
+                      Const-WRITE      delimited by size
                       Const-Of-DDNAME  delimited by size
                   into Error-Message
-               end-string 
+               end-string
                perform 8900-Scream-and-Die
                exit
            end-if
-           perform 1100-Read-by-Primary-Key
-                   
+           close RRDS-File-Seq
+           perform 1010-Open
+           read RRDS-File
+               into RRDS-Record
+           end-read
+           display "After WRITE, READ of RRN " RRN
+           display "    got File Status " RRDS-File-Status
            perform 9000-Close
            .
        1010-Open.
-           open i-o KSDS-File
-           if not KSDS-OK
+           open i-o RRDS-File
+           if not RRDS-OK
                string Const-Got-Status delimited by size
-                      KSDS-File-Status delimited by size
+                      RRDS-File-Status delimited by size
                       Const-On         delimited by size
-                      Const-OPEN       delimited by size 
+                      Const-OPEN       delimited by size
                       Const-Of-DDNAME  delimited by size
                   into Error-Message
-               end-string 
+               end-string
                perform 8900-Scream-and-Die
            end-if
            .
-       1100-Read-by-Primary-Key.
-           read KSDS-File
-               into KSDS-Record
+       1100-Read-by-RRN.
+           read RRDS-File
+               into RRDS-Record
            end-read
-           if KSDS-OK
-               display "Random READ by key " Rec-Key ":"
-               display KSDS-Record
+           if RRDS-OK
+               display "Random READ by RRN " RRN ":"
+               display RRDS-Record
            else
                string Const-Got-Status delimited by size
-                      KSDS-File-Status delimited by size
+                      RRDS-File-Status delimited by size
                       Const-On         delimited by size
-                      Const-READ       delimited by size 
+                      Const-READ       delimited by size
                       Const-Of-DDNAME  delimited by size
                   into Error-Message
-               end-string 
+               end-string
                perform 8910-Scream
            end-if
            .
-       2000-Sequential.       
+       2000-Sequential.
       *****************************************************************
-      * Demonstrate COBOL code for KSDS sequential access.
+      * Demonstrate COBOL code for RRDS sequential access.
       *****************************************************************
            display space
-           display "Read entire KSDS sequentially"
+           display "Read entire RRDS sequentially"
            perform 1010-Open
            perform 2010-Read-Next
            perform with test before
-                   until KSDS-EOF
-               display KSDS-Record
+                   until RRDS-EOF
+               display RRDS-Record
                perform 2010-Read-Next
            end-perform
-            
            perform 9000-Close
            .
        2010-Read-Next.
-           read KSDS-File next
-               into KSDS-Record
+           read RRDS-File next
+               into RRDS-Record
            end-read
-           if not KSDS-OK and not KSDS-EOF
+           if not RRDS-OK and not RRDS-EOF
                string Const-Got-Status delimited by size
-                      KSDS-File-Status delimited by size
+                      RRDS-File-Status delimited by size
                       Const-On         delimited by size
-                      Const-READ-NEXT  delimited by size 
+                      Const-READ-NEXT  delimited by size
                       Const-Of-DDNAME  delimited by size
                   into Error-Message
-               end-string 
+               end-string
                perform 8900-Scream-and-Die
            end-if
            .
-       3000-Skip-Sequential.       
+       3000-Skip-Sequential.
       *****************************************************************
-      * Demonstrate COBOL code for KSDS skip sequential access.
+      * Demonstrate COBOL code for RRDS skip sequential access.
       *****************************************************************
            display space
            display "Skip sequential processing"
-           display "    starting with full key KAMINS112233 to EOF"
+           display "    starting with RRN 3 to EOF"
            perform 1010-Open
 
-           move Key-3 to FD-Rec-Key
-           start KSDS-File
-               key is equal to FD-Rec-Key
+           move RRN-3 to RRN
+           start RRDS-File
+               key is equal to RRN
            end-start
            perform 2010-Read-Next
            perform with test before
-                   until KSDS-EOF
-               display KSDS-Record
-               perform 2010-Read-Next
-           end-perform
-            
-           display space
-           display "Skip sequential processing"
-           display "    starting with partial key KAMINS to EOF"
-           
-           move low-values to FD-Rec-Key
-           move Key-3(1:6) to FD-Rec-Key(1:6) 
-           start KSDS-File
-               key is greater than or equal to FD-Rec-Key
-           end-start
-           perform 2010-Read-Next 
-           perform with test before
-                   until KSDS-EOF
-               display KSDS-Record
+                   until RRDS-EOF
+               display RRDS-Record
                perform 2010-Read-Next
            end-perform
            perform 9000-Close
@@ -232,8 +225,8 @@
            goback
            .
        9000-Close.
-           close KSDS-File
-           .                         
+           close RRDS-File
+           .
 
 
 

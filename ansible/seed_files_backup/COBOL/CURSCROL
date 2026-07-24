@@ -81,7 +81,9 @@
 
        DISPLAY-ROW.
            IF SQLCODE = 0
-               DISPLAY "EMPID: " WS-EMPID "  NAME: " WS-FIRSTNAME " " WS-LASTNAME
+               DISPLAY
+                   "EMPID: " WS-EMPID
+                   "  NAME: " WS-FIRSTNAME " " WS-LASTNAME
            ELSE
                DISPLAY "SQL ERROR OR NO DATA: " SQLCODE
            END-IF

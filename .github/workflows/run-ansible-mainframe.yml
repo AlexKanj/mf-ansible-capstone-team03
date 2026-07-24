@@ -5,19 +5,51 @@ on:
     inputs:
       PLAYBOOK_NAME:
         description: Ansible playbook to run
+        type: choice
+        options:
+          - run_jcl.yml
+          - run_jcl_nonfatal.yml
+          - gather_facts.yml
+          - gather_facts_including_zinfo.yml
+          - gather_mf_metrics.yml
+          - ping.yml
+          - hello_world.yml
+          - define_ksds.yml
+          - provision_new_dataset.yml
+          - list_active_started_tasks.yml
+          - list_sys1_proclib_members.yml
+          - run_sort_1.yml
+          - run_job_and_list_selected_dataset.yml
+          - submit_local_jcl_pds.yml
+          - submit_local_jcl_uss.yml
+          - create_qsam.yml
+          - create_qsam_multiple.yml
+          - create_qsam_using_local_jcl.yml
+          - create_qsam_via_tso.yml
+          - racf_rebuild.yml
+          - racf_group_sandbox.yml
+          - racf_dataset_profiles.yml
         default: run_jcl.yml
         required: true
       JCL_FILE:
-        description: JCL file to submit
-        default: hello_world.jcl
-        required: true
+        description: JCL file to submit (required for run_jcl.yml and run_jcl_nonfatal.yml)
+        type: choice
+        options:
+          - create_customer_file.jcl
+          - delete_customer_file.jcl
+          - hello_world_fail.jcl
+          - hello_world.jcl
+          - list_datasets.jcl
+          - report_customers.jcl
+          - sort_customers.jcl
+        required: false
       STUDENT_ID:
         description: Student ID
         default: ""
         required: false
       RUN_MF_METRICS:
         description: Gather mainframe system metrics
-        default: "false"
+        default: "true"
         required: false
       REBUILD_RACF:
         description: Delete and recreate managed RACF resources (racf_rebuild.yml only)
@@ -60,6 +92,16 @@ jobs:
           printf '%s\n' "$ID_RSA" > .ssh/id_rsa
           chmod 600 .ssh/id_rsa
           export ANSIBLE_HOST_KEY_CHECKING=False
+
+          if [[ "${PLAYBOOK_NAME}" != *.yml ]]; then
+            echo "PLAYBOOK_NAME must be a .yml file in the ansible directory."
+            exit 2
+          fi
+
+          if [ ! -f "${PLAYBOOK_NAME}" ]; then
+            echo "PLAYBOOK_NAME '${PLAYBOOK_NAME}' was not found under ansible/."
+            exit 2
+          fi
 
           export START_TIME=$(date +%s)
 
@@ -152,7 +194,11 @@ jobs:
 
           cat metrics.prom
 
-          curl --data-binary @metrics.prom \
-            "${PUSHGATEWAY_URL}/metrics/job/github_ansible/playbook/${PLAYBOOK_NAME}/repo/${REPO_SLUG}"
+          if [ -n "${PUSHGATEWAY_URL}" ]; then
+            curl --data-binary @metrics.prom \
+              "${PUSHGATEWAY_URL}/metrics/job/github_ansible/playbook/${PLAYBOOK_NAME}/repo/${REPO_SLUG}"
+          else
+            echo "PUSHGATEWAY_URL is not set; skipping metrics push."
+          fi
 
           exit $RESULT

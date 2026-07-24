@@ -2,7 +2,7 @@
        Program-Id. BSKEL1.
       *****************************************************************
       * Batch COBOL skeleton.
-      * Read sequential input, write sequential output. 
+      * Read sequential input, write sequential output.
       *****************************************************************
        Environment Division.
        Input-Output Section.
@@ -21,16 +21,16 @@
        File Section.
        FD  Sequential-Input-File
            Recording Mode F
-           Record Contains 80 Characters 
+           Record Contains 80 Characters
            Block Contains 0 Records
            Data Record Sequential-Input-Record.
-       01  Sequential-Input-Record           pic x(80).    
+       01  Sequential-Input-Record           pic x(80).
        FD  Sequential-Output-File
            Recording Mode F
-           Record Contains 80 Characters 
+           Record Contains 80 Characters
            Block Contains 0 Records
            Data Record Sequential-Output-Record.
-       01  Sequential-Output-Record          pic x(80).    
+       01  Sequential-Output-Record          pic x(80).
        Working-Storage Section.
        01  Work-X.
            05  filler                        pic x.
@@ -57,7 +57,7 @@
            05  Const-OPEN                    pic x(4)  value "OPEN".
            05  Const-CLOSE                   pic x(5)  value "CLOSE".
            05  Const-READ                    pic x(4)  value "READ".
-           05  Const-WRITE                   pic x(5)  value "WRITE".                                     
+           05  Const-WRITE                   pic x(5)  value "WRITE".
        Procedure Division.
            perform 0000-Initialize
            perform 1000-Process
@@ -65,13 +65,13 @@
            goback
            .
        0000-Initialize.
-           perform 0100-Open-Files    
+           perform 0100-Open-Files
            .
        0100-Open-Files.
            open input Sequential-Input-File
            if not Sequential-Input-OK
                move Sequential-Input-File-Status to Error-Status
-               move Const-OPEN to Error-Operation 
+               move Const-OPEN to Error-Operation
                move Sequential-Input-File-DDNAME to Error-DDNAME
                move IO-Error-Message to Error-Message
                perform 8900-Scream-and-Die
@@ -79,7 +79,7 @@
            open output Sequential-Output-File
            if not Sequential-Output-OK
                move Sequential-Output-File-Status to Error-Status
-               move Const-OPEN to Error-Operation 
+               move Const-OPEN to Error-Operation
                move Sequential-Output-File-DDNAME to Error-DDNAME
                move IO-Error-Message to Error-Message
                perform 8900-Scream-and-Die
@@ -97,7 +97,7 @@
            read Sequential-Input-File
            if not Sequential-Input-OK and not Sequential-Input-EOF
                move Sequential-Input-File-Status to Error-Status
-               move Const-READ to Error-Operation 
+               move Const-READ to Error-Operation
                move Sequential-Input-File-DDNAME to Error-DDNAME
                move IO-Error-Message to Error-Message
                perform 8900-Scream-and-Die
@@ -111,7 +111,7 @@
            write Sequential-Output-Record
            if not Sequential-Output-OK
                move Sequential-Output-File-Status to Error-Status
-               move Const-WRITE to Error-Operation 
+               move Const-WRITE to Error-Operation
                move Sequential-Output-File-DDNAME to Error-DDNAME
                move IO-Error-Message to Error-Message
                perform 8900-Scream-and-Die
@@ -125,4 +125,4 @@
        9000-Housekeeping.
            close Sequential-Output-File
            close Sequential-Input-File
-           .    
+           .

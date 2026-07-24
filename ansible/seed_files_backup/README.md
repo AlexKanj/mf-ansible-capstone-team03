@@ -1,0 +1,2 @@
+The `seed_files_backup` exists because when running `ansible/racf_rebuild.yml`, it takes a really long time to get all of the files in `seed_files_backup` into the mainframe.
+Because of this, we will instead copy over only 2 files (data set members) over to the system to speed up the process. To avoid losing all of the files though, we have created `seed_files_backup`, in case the group wants to show off a full build

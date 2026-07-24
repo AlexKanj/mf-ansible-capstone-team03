@@ -11,7 +11,7 @@
 
        01  WS-EMPID           PIC X(06) VALUE '000123'.
        01  WS-NEW-SALARY      PIC S9(7)V99 COMP-3 VALUE 55000.00.
-       01  WS-COMMIT-FLAG     PIC X VALUE 'Y'.  
+       01  WS-COMMIT-FLAG     PIC X VALUE 'Y'.
 
        PROCEDURE DIVISION.
 

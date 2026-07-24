@@ -1,4 +1,3 @@
----
 # debug
 - name: Show destination
   debug:
@@ -14,6 +13,10 @@
         dest: >-
           {{ hlq }}.{{ mlq }}.{{ library }}({{ member.path | basename | splitext | first | upper }})
         remote_src: false
+        force: true
+        encoding:
+          from: UTF-8
+          to: IBM-1047
       register: copy_result
   rescue:
     - name: Report failure
