@@ -125,8 +125,20 @@ async def get_overview(
             'max(github_ansible_playbook_latest_success'
             '{playbook="provision_new_dataset.yml"})'
         ),
-        "jcl_success": "max(zos_job_success)",
-        "jcl_return_code": "max(zos_job_return_code)",
+        "jcl_success": (
+            'max(zos_job_success{'
+            'playbook="run_jcl.yml",'
+            'repo="mf-ansible-capstone-team03",'
+            'build=""'
+            '})'
+        ),
+        "jcl_return_code": (
+            'max(zos_job_return_code{'
+            'playbook="run_jcl.yml",'
+            'repo="mf-ansible-capstone-team03",'
+            'build=""'
+            '})'
+        ),
         "racf_users": "max(zos_racf_users_total)",
         "racf_groups": "max(zos_racf_groups_total)",
         "datasets_ready": (
