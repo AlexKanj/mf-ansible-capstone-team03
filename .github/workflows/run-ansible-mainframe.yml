@@ -196,7 +196,7 @@ jobs:
 
           if [ -n "${PUSHGATEWAY_URL}" ]; then
             curl --data-binary @metrics.prom \
-              "${PUSHGATEWAY_URL}/metrics/job/github_ansible/playbook/${PLAYBOOK_NAME}/repo/${REPO_SLUG}"
+              "${PUSHGATEWAY_URL}/metrics/job/github_ansible/playbook/${PLAYBOOK_NAME}/repo/${REPO_SLUG}/build/${BUILD_NUMBER}"
           else
             echo "PUSHGATEWAY_URL is not set; skipping metrics push."
           fi
