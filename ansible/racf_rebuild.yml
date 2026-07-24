@@ -1,12 +1,25 @@
 ---
-- import_playbook: racf_dataset_profiles.yml
+# Safe default: without -e "rebuild_racf=true", this playbook only runs the
+# read-only verification playbook at the end.
+- name: Delete managed RACF data set profiles
+  import_playbook: racf_dataset_profiles.yml
   vars:
     racf_action: delete
+  when: rebuild_racf | default(false) | bool
 
-- import_playbook: racf_group_sandbox.yml
+- name: Rebuild managed RACF groups and users
+  import_playbook: racf_group_sandbox.yml
+  when: rebuild_racf | default(false) | bool
 
-- import_playbook: racf_dataset_profiles.yml
+- name: Create managed RACF data set profiles
+  import_playbook: racf_dataset_profiles.yml
   vars:
     racf_action: create
+  when: rebuild_racf | default(false) | bool
 
-- import_playbook: provision_new_dataset.yml
+- name: Ensure managed user data sets are provisioned
+  import_playbook: provision_new_dataset.yml
+  when: rebuild_racf | default(false) | bool
+
+- name: Verify managed RACF resources and user data sets
+  import_playbook: racf_verify.yml

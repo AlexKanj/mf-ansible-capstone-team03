@@ -1,0 +1,131 @@
+---
+# Read-only verification of the RACF resources and user data sets managed by
+# this project. This playbook does not create, change, or delete anything.
+- name: Verify managed RACF resources and user data sets
+  hosts: zos
+  gather_facts: false
+
+  environment: "{{ environment_vars }}"
+
+  vars_files:
+    - racf_vars.yml
+
+  vars:
+    managed_users: >-
+      {{
+        users
+        | dict2items
+        | map(attribute='value')
+        | flatten
+        | unique
+        | sort
+      }}
+    managed_libraries:
+      - DEV.COBOL
+      - DEV.JCL
+      - TST.COBOL
+      - TST.JCL
+
+  tasks:
+    - name: Check RACF groups
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "LISTGRP {{ item.identity.name }} OMVS"
+      loop: "{{ racf_groups }}"
+      loop_control:
+        label: "{{ item.identity.name }}"
+      register: group_checks
+      failed_when: false
+      changed_when: false
+
+    - name: Confirm RACF groups exist
+      ansible.builtin.assert:
+        that:
+          - item.output | default([]) | length > 0
+          - item.output[0].rc | default(16) | int == 0
+        success_msg: "RACF group {{ item.item.identity.name }} exists"
+        fail_msg: >-
+          RACF group {{ item.item.identity.name }} is missing or inaccessible
+      loop: "{{ group_checks.results }}"
+      loop_control:
+        label: "{{ item.item.identity.name }}"
+
+    - name: Check RACF users
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "LISTUSER {{ item }}"
+      loop: "{{ managed_users }}"
+      loop_control:
+        label: "{{ item }}"
+      register: user_checks
+      failed_when: false
+      changed_when: false
+
+    - name: Confirm RACF users exist
+      ansible.builtin.assert:
+        that:
+          - item.output | default([]) | length > 0
+          - item.output[0].rc | default(16) | int == 0
+        success_msg: "RACF user {{ item.item }} exists"
+        fail_msg: "RACF user {{ item.item }} is missing or inaccessible"
+      loop: "{{ user_checks.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Check RACF data set profiles
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "LISTDSD DATASET('{{ item.userid }}.**') GENERIC ALL"
+      loop: "{{ dataset_profiles }}"
+      loop_control:
+        label: "{{ item.userid }}.**"
+      register: profile_checks
+      failed_when: false
+      changed_when: false
+
+    - name: Confirm RACF data set profiles exist
+      ansible.builtin.assert:
+        that:
+          - item.output | default([]) | length > 0
+          - item.output[0].rc | default(16) | int == 0
+        success_msg: "RACF profile {{ item.item.userid }}.** exists"
+        fail_msg: >-
+          RACF profile {{ item.item.userid }}.** is missing or inaccessible
+      loop: "{{ profile_checks.results }}"
+      loop_control:
+        label: "{{ item.item.userid }}.**"
+
+    - name: Check managed user data sets
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "LISTDS '{{ item.0 }}.{{ item.1 }}'"
+      loop: "{{ managed_users | product(managed_libraries) | list }}"
+      loop_control:
+        label: "{{ item.0 }}.{{ item.1 }}"
+      register: dataset_checks
+      failed_when: false
+      changed_when: false
+
+    - name: Confirm managed user data sets exist
+      ansible.builtin.assert:
+        that:
+          - item.output | default([]) | length > 0
+          - item.output[0].rc | default(16) | int == 0
+        success_msg: "Data set {{ item.item.0 }}.{{ item.item.1 }} exists"
+        fail_msg: >-
+          Data set {{ item.item.0 }}.{{ item.item.1 }}
+          is missing or inaccessible
+      loop: "{{ dataset_checks.results }}"
+      loop_control:
+        label: "{{ item.item.0 }}.{{ item.item.1 }}"
+
+    - name: Verification summary
+      ansible.builtin.debug:
+        msg:
+          - "Verified {{ racf_groups | length }} RACF groups"
+          - "Verified {{ managed_users | length }} RACF users"
+          - "Verified {{ dataset_profiles | length }} RACF data set profiles"
+          - >-
+            Verified
+            {{ (managed_users | length) * (managed_libraries | length) }}
+            user data sets

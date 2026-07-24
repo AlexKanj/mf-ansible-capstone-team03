@@ -4,6 +4,7 @@
 # Usage:
 #   ansible-playbook provision_new_dataset.yml
 #   ansible-playbook provision_new_dataset.yml -e "userid=<xxx>"
+#   ansible-playbook provision_new_dataset.yml -e "rebuild_datasets=true"
 #
 # Creates:
 #   <userid>.DEV.COBOL
@@ -30,7 +31,9 @@
   vars:
     mlq: DEV
     seed_base: "{{ playbook_dir }}/seed_files"
-    rebuild: true
+    # Safe by default. Set rebuild_datasets=true explicitly to delete and
+    # recreate the managed data sets before provisioning them.
+    rebuild_datasets: false
     libraries:
       - mlq: DEV
         libname: COBOL
@@ -93,6 +96,6 @@
 
           # HELP zos_provision_rebuild_requested Whether rebuilding existing datasets was requested
           # TYPE zos_provision_rebuild_requested gauge
-          zos_provision_rebuild_requested {{ 1 if rebuild | bool else 0 }}
+          zos_provision_rebuild_requested {{ 1 if rebuild_datasets | bool else 0 }}
       delegate_to: localhost
       run_once: true

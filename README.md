@@ -56,6 +56,8 @@ Trigger **run-ansible-mainframe** from GitHub Actions → Run workflow.
 | `JCL_FILE` | `hello_world.jcl` | JCL file from `jcl/` (used when `PLAYBOOK_NAME=run_jcl.yml`) |
 | `STUDENT_ID` | *(empty)* | Student identifier for dataset/job isolation (see below) |
 | `RUN_MF_METRICS` | `false` | Set to `true` to also run `gather_mf_metrics.yml` and push system metrics |
+| `REBUILD_RACF` | `false` | Set to `true` only with `racf_rebuild.yml` to delete and recreate managed RACF groups, users, and profiles |
+| `REBUILD_DATASETS` | `false` | Set to `true` to delete and recreate managed DEV/TST user datasets |
 
 ### Common Runs
 
@@ -69,6 +71,25 @@ Trigger **run-ansible-mainframe** from GitHub Actions → Run workflow.
 | Delete customer file | `run_jcl.yml` | `delete_customer_file.jcl` | `STU01` |
 | List student's datasets | `run_jcl.yml` | `list_datasets.jcl` | `STU01` |
 | Push system metrics | `ping.yml` | — | — (set `RUN_MF_METRICS=true`) |
+| Verify RACF resources and datasets | `racf_verify.yml` | — | — |
+| Rebuild RACF resources | `racf_rebuild.yml` | — | — (set `REBUILD_RACF=true`) |
+| Ensure datasets exist without deleting them | `provision_new_dataset.yml` | — | — (`REBUILD_DATASETS=false`) |
+
+### Safe RACF and Dataset Modes
+
+Deletion is disabled by default.
+
+- Run `racf_verify.yml` for a read-only check of all managed RACF groups,
+  users, generic data set profiles, and DEV/TST data sets.
+- Run `provision_new_dataset.yml` with `REBUILD_DATASETS=false` to preserve
+  existing data sets and allocate only missing ones.
+- Run `racf_rebuild.yml` with `REBUILD_RACF=true` only when an intentional
+  RACF sandbox reset is required.
+- Set `REBUILD_DATASETS=true` separately when the existing DEV/TST data sets
+  must also be deleted and recreated.
+
+Running `racf_rebuild.yml` with its default `REBUILD_RACF=false` performs only
+the final read-only verification.
 
 ### Running Locally
 
@@ -88,6 +109,18 @@ ansible-playbook -u ibmuser -i inventory.yml --private-key id_rsa \
 # Collect system metrics
 ansible-playbook -u ibmuser -i inventory.yml --private-key id_rsa \
   gather_mf_metrics.yml
+
+# Read-only RACF and data set verification
+ansible-playbook -u ibmuser -i inventory.yml --private-key id_rsa \
+  racf_verify.yml
+
+# Intentional RACF rebuild, preserving existing user data sets
+ansible-playbook -u ibmuser -i inventory.yml --private-key id_rsa \
+  -e "rebuild_racf=true rebuild_datasets=false" racf_rebuild.yml
+
+# Intentional full RACF and managed data set rebuild
+ansible-playbook -u ibmuser -i inventory.yml --private-key id_rsa \
+  -e "rebuild_racf=true rebuild_datasets=true" racf_rebuild.yml
 ```
 
 ---

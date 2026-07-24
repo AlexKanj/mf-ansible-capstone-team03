@@ -14,10 +14,9 @@
   delegate_to: localhost
   register: member_files_all
 
-- name: Limit to one member when testing
+- name: Select all seed members
   ansible.builtin.set_fact:
-    member_files: >-
-      {{ member_files_all if (rebuild | default(false) | bool) else member_files_all | combine({'files': member_files_all.files[:1]}) }}
+    member_files: "{{ member_files_all }}"
 
 # debug
 - name: Show members found
