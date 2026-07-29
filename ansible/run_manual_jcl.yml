@@ -1,0 +1,39 @@
+# Writes the JCL inline, submits it, and prints the spool output.
+#   -e jcl_text=...
+- name: Inline JCL job
+  hosts: zos
+  gather_facts: false
+  collections:
+    - ibm.ibm_zos_core
+  environment: "{{ environment_vars }}"
+
+  tasks:
+    - name: Validate manual JCL input
+      assert:
+        that:
+          - jcl_text is defined
+          - (jcl_text | trim | length) > 0
+        fail_msg: "jcl_text is required for run_manual_jcl.yml"
+
+    - name: Write JCL to USS
+      zos_copy:
+        content: |
+          {{ jcl_text }}
+        dest: /u/ibmuser/run_manual.jcl
+        force: true
+
+    - name: Submit job
+      zos_job_submit:
+        src: /u/ibmuser/run_manual.jcl
+        location: USS
+        wait_time_s: 60
+        return_output: true
+      register: job_output
+
+    - name: Show job ID and return code
+      debug:
+        msg: "Job {{ job_output.jobs[0].job_id }} completed RC={{ job_output.jobs[0].ret_code.msg }}"
+
+    - name: Show spool output
+      debug:
+        msg: "{{ job_output.jobs[0].ddnames | map(attribute='content') | list }}"

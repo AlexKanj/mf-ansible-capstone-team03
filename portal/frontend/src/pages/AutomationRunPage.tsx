@@ -20,6 +20,8 @@ const INITIAL_FORM: RunAutomationPayload = {
   rebuild_datasets: "false",
 };
 
+const MANUAL_JCL_PLAYBOOK = "run_manual_jcl.yml";
+
 function formatDate(value: string | null): string {
   if (!value) {
     return "Unavailable";
@@ -40,6 +42,9 @@ export function AutomationRunPage() {
 
   const [runIdInput, setRunIdInput] = useState("");
 
+  const [manualJclText, setManualJclText] =
+    useState("");
+
   const [submitLoading, setSubmitLoading] =
     useState(false);
 
@@ -52,11 +57,21 @@ export function AutomationRunPage() {
   const [statusError, setStatusError] =
     useState<string | null>(null);
 
+  const isManualJclPlaybook =
+    formData.playbook.trim() === MANUAL_JCL_PLAYBOOK;
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!formData.playbook.trim()) {
+    const selectedPlaybook = formData.playbook.trim();
+
+    if (!selectedPlaybook) {
       setSubmitError("Playbook name is required");
+      return;
+    }
+
+    if (isManualJclPlaybook && !manualJclText.trim()) {
+      setSubmitError("JCL text is required in manual mode");
       return;
     }
 
@@ -65,12 +80,24 @@ export function AutomationRunPage() {
     setRunStatus(null);
 
     try {
-      const result = await submitAutomationRun({
+      const submitPayload: RunAutomationPayload & {
+        jcl_text?: string;
+      } = {
         ...formData,
-        playbook: formData.playbook.trim(),
-        jcl_file: formData.jcl_file.trim(),
+        playbook: selectedPlaybook,
+        jcl_file: isManualJclPlaybook
+          ? ""
+          : formData.jcl_file.trim(),
         student_id: formData.student_id.trim(),
-      });
+      };
+
+      if (isManualJclPlaybook) {
+        submitPayload.jcl_text = manualJclText.trim();
+      }
+
+      const result = await submitAutomationRun(
+        submitPayload as RunAutomationPayload,
+      );
 
       setDispatchResult(result);
 
@@ -143,23 +170,44 @@ export function AutomationRunPage() {
                 ...previous,
                 playbook: event.target.value,
               }));
+              setSubmitError(null);
             }}
             required
           />
 
-          <label htmlFor="jcl-file">JCL file</label>
-          <input
-            id="jcl-file"
-            type="text"
-            placeholder="jcl/hello_world.jcl"
-            value={formData.jcl_file}
-            onChange={(event) => {
-              setFormData((previous) => ({
-                ...previous,
-                jcl_file: event.target.value,
-              }));
-            }}
-          />
+          {isManualJclPlaybook ? (
+            <>
+              <label htmlFor="manual-jcl-text">
+                Manual JCL text
+              </label>
+              <textarea
+                id="manual-jcl-text"
+                placeholder="//JOBNAME JOB ..."
+                value={manualJclText}
+                onChange={(event) => {
+                  setManualJclText(event.target.value);
+                }}
+                rows={12}
+                required
+              />
+            </>
+          ) : (
+            <>
+              <label htmlFor="jcl-file">JCL file</label>
+              <input
+                id="jcl-file"
+                type="text"
+                placeholder="jcl/hello_world.jcl"
+                value={formData.jcl_file}
+                onChange={(event) => {
+                  setFormData((previous) => ({
+                    ...previous,
+                    jcl_file: event.target.value,
+                  }));
+                }}
+              />
+            </>
+          )}
 
           <label htmlFor="student-id">Student ID</label>
           <input

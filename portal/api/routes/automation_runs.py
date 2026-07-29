@@ -21,6 +21,7 @@ class RunAutomation(BaseModel):
 	run_mf_metrics: str = "true"
 	rebuild_racf: str = "false"
 	rebuild_datasets: str = "false"
+	jcl_text: str = ""
 
 
 def github_headers() -> dict[str, str]:
@@ -37,11 +38,26 @@ def require_github_config() -> None:
 	if not GITHUB_TOKEN:
 		raise HTTPException(status_code=500, detail="GITHUB_TOKEN is not set")
 
+
 @router.post("/api/automation-run")
 async def automation_run(payload: RunAutomation):
 	require_github_config()
 
-    # this url will be used to actually run the github action
+	playbook_name = payload.playbook.strip()
+	jcl_file = payload.jcl_file.strip()
+	student_id = payload.student_id.strip()
+	jcl_text = payload.jcl_text.strip()
+
+	if not playbook_name:
+		raise HTTPException(status_code=400, detail="Playbook name is required")
+
+	if playbook_name == "run_manual_jcl.yml" and not jcl_text:
+		raise HTTPException(
+			status_code=400,
+			detail="jcl_text is required when playbook is run_manual_jcl.yml",
+		)
+
+	# This URL dispatches the selected GitHub Actions workflow.
 	dispatch_url = (
 		f"{GITHUB_API_URL}/repos/{GITHUB_REPO}/actions/workflows/"
 		f"{WORKFLOW_FILE}/dispatches"
@@ -56,9 +72,10 @@ async def automation_run(payload: RunAutomation):
 	dispatch_payload = {
 		"ref": "main",
 		"inputs": {
-			"PLAYBOOK_NAME": payload.playbook,
-			"JCL_FILE": payload.jcl_file,
-			"STUDENT_ID": payload.student_id,
+			"PLAYBOOK_NAME": playbook_name,
+			"JCL_FILE": jcl_file,
+			"JCL_TEXT": jcl_text,
+			"STUDENT_ID": student_id,
 			"RUN_MF_METRICS": payload.run_mf_metrics,
 			"REBUILD_RACF": payload.rebuild_racf,
 			"REBUILD_DATASETS": payload.rebuild_datasets,
@@ -72,7 +89,6 @@ async def automation_run(payload: RunAutomation):
 	}
 	dispatch_started_at = datetime.now(timezone.utc)
 
-    # send some api calls to github
 	async with httpx.AsyncClient(timeout=20.0) as client:
 
         # get the most recent job before the one we will submit
@@ -125,7 +141,9 @@ async def automation_run(payload: RunAutomation):
 				if not created_at:
 					continue
 
-				created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+				created_dt = datetime.fromisoformat(
+					created_at.replace("Z", "+00:00")
+				)
 				if created_dt >= dispatch_started_at:
 					selected_run = run
 					break
@@ -144,6 +162,7 @@ async def automation_run(payload: RunAutomation):
 		"run_number": selected_run.get("run_number"),
 		"html_url": selected_run.get("html_url"),
 	}
+
 
 @router.get("/api/automation-run/{run_id}")
 async def get_automation_run(run_id: int):
