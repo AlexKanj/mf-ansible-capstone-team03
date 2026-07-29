@@ -8,6 +8,7 @@ on:
         type: choice
         options:
           - run_jcl.yml
+          - run_manual_jcl.yml
           - run_jcl_nonfatal.yml
           - gather_facts.yml
           - gather_facts_including_zinfo.yml
@@ -59,6 +60,10 @@ on:
         description: Delete and recreate managed user datasets
         default: "false"
         required: false
+      JCL_TEXT:
+        description: Inline JCL text (used by run_manual_jcl.yml)
+        default: ""
+        required: false
 
 jobs:
   run-ansible-playbook:
@@ -79,6 +84,7 @@ jobs:
           RUN_MF_METRICS: ${{ inputs.RUN_MF_METRICS }}
           REBUILD_RACF: ${{ inputs.REBUILD_RACF }}
           REBUILD_DATASETS: ${{ inputs.REBUILD_DATASETS }}
+          JCL_TEXT: ${{ inputs.JCL_TEXT }}
           REPO_SLUG: ${{ github.event.repository.name }}
           BRANCH: ${{ github.ref_name }}
           BUILD_NUMBER: ${{ github.run_number }}
@@ -105,13 +111,24 @@ jobs:
 
           export START_TIME=$(date +%s)
 
+          cat > extra_vars.yml <<EOF
+          jcl_file: "${JCL_FILE}"
+          student_id: "${STUDENT_ID}"
+          rebuild_racf: "${REBUILD_RACF}"
+          rebuild_datasets: "${REBUILD_DATASETS}"
+          jcl_text: |
+          EOF
+
+          # Preserve newlines and indentation for inline JCL text.
+          printf '%s\n' "${JCL_TEXT}" | sed 's/^/  /' >> extra_vars.yml
+
           set +e
 
           ansible-playbook \
             -u ibmuser \
             -i inventory.yml \
             --private-key .ssh/id_rsa \
-            -e "jcl_file=${JCL_FILE} student_id=${STUDENT_ID} rebuild_racf=${REBUILD_RACF} rebuild_datasets=${REBUILD_DATASETS}" \
+            -e @extra_vars.yml \
             ${PLAYBOOK_NAME}
 
           RESULT=$?
