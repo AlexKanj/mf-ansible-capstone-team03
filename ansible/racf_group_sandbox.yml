@@ -59,36 +59,76 @@
       loop_control:
         label: "{{ item.item.identity.name }}"
 
-    # Normal order because parent groups must be created before children.
-    - name: Create RACF groups
+    # Create the base group. If the group already exists because deletion
+    # was unable to remove it, continue and update it in the next task.
+    - name: Create RACF base groups
       ibm.ibm_zos_core.zos_tso_command:
         commands:
           - >-
             ADDGROUP {{ item.identity.name }}
             OWNER({{ item.hierarchy.owner }})
             SUPGROUP({{ item.hierarchy.superior_group }})
-            OMVS(GID({{ item.omvs.gid }}))
+        max_rc: 8
       loop: "{{ racf_groups }}"
       loop_control:
         label: "{{ item.identity.name }}"
       register: addgroup_results
+      failed_when: false
 
     - name: Show ADDGROUP results
       ansible.builtin.debug:
         msg:
           group: "{{ item.item.identity.name }}"
-          output: "{{ item.output }}"
+          rc: "{{ item.output[0].rc | default('unknown') }}"
+          output: "{{ item.output | default([]) }}"
+          message: "{{ item.msg | default('') }}"
+          failed: "{{ item.failed | default(false) }}"
       loop: "{{ addgroup_results.results }}"
+      loop_control:
+        label: "{{ item.item.identity.name }}"
+
+    # Apply the OMVS GID separately. This works for both newly created
+    # groups and groups that already existed.
+    - name: Add or update RACF group OMVS segments
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - >-
+            ALTGROUP {{ item.identity.name }}
+            OMVS(GID({{ item.omvs.gid }}))
+        max_rc: 8
+      loop: "{{ racf_groups }}"
+      loop_control:
+        label: "{{ item.identity.name }} GID {{ item.omvs.gid }}"
+      register: altgroup_omvs_results
+      failed_when: false
+
+    - name: Show ALTGROUP OMVS results
+      ansible.builtin.debug:
+        msg:
+          group: "{{ item.item.identity.name }}"
+          gid: "{{ item.item.omvs.gid }}"
+          rc: "{{ item.output[0].rc | default('unknown') }}"
+          output: "{{ item.output | default([]) }}"
+          message: "{{ item.msg | default('') }}"
+          failed: "{{ item.failed | default(false) }}"
+      loop: "{{ altgroup_omvs_results.results }}"
       loop_control:
         label: "{{ item.item.identity.name }}"
 
 
 
-    - name: Create users
+    # Users are created with SYS1 as their default group so that
+    # they can sign on through TSO.
+    - name: Create users with SYS1 as the default group
       ibm.ibm_zos_core.zos_tso_command:
         commands:
-          - "ADDUSER {{ item.1 }} PASSWORD({{ item.1 }}) OWNER(IBMUSER) DFLTGRP({{ item.0.key }}) TSO(ACCTNUM(ACCT001) PROC(DB13PROC) SIZE(2096128))"
-      loop: "{{ users | dict2items | subelements('value') }}" # loop over users using key as groups to be added and value as users to be added
+          - >-
+            ADDUSER {{ item.1 }}
+            DFLTGRP(SYS1)
+            NAME('{{ item.1 }}')
+            OWNER(IBMUSER)
+            PASSWORD({{ item.1 }})
+      loop: "{{ users | dict2items | subelements('value') }}"
       loop_control:
         label: "{{ item.1 }}"
       register: adduser_results
@@ -98,31 +138,106 @@
       ansible.builtin.debug:
         msg:
           user: "{{ item.item.1 }}"
-          output: "{{ item.output }}"
+          output: "{{ item.output | default([]) }}"
+          message: "{{ item.msg | default('') }}"
+          failed: "{{ item.failed | default(false) }}"
+          changed: "{{ item.changed | default(false) }}"
       loop: "{{ adduser_results.results }}"
       loop_control:
         label: "{{ item.item.1 }}"
 
-    # This is required for user to be able to actually logon with TSO
-    - name: Connect users to SYS1 as a secondary group
+    - name: Add TSO segment to users
       ibm.ibm_zos_core.zos_tso_command:
         commands:
-          - "CONNECT {{ item.1 }} GROUP(SYS1)"
-        max_rc: 8
+          - "ALTUSER {{ item.1 }} TSO(ACCTNUM(ACCT001) PROC(DB13PROC) SIZE(2096128) COMMAND(ISPF))"
       loop: "{{ users | dict2items | subelements('value') }}"
       loop_control:
         label: "{{ item.1 }}"
-      register: connect_sys1_results
+      register: altuser_tso_results
       failed_when: false
 
-    - name: Show SYS1 connect results
+    - name: Show TSO segment results
       ansible.builtin.debug:
         msg:
           user: "{{ item.item.1 }}"
           output: "{{ item.output | default([]) }}"
           message: "{{ item.msg | default('') }}"
           failed: "{{ item.failed | default(false) }}"
-      loop: "{{ connect_sys1_results.results }}"
+          changed: "{{ item.changed | default(false) }}"
+      loop: "{{ altuser_tso_results.results }}"
+      loop_control:
+        label: "{{ item.item.1 }}"
+
+    - name: Add OMVS segment to users
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "ALTUSER {{ item.1 }} OMVS(AUTOUID HOME('/u/{{ item.1 | lower }}') PROGRAM('/bin/sh'))"
+      loop: "{{ users | dict2items | subelements('value') }}"
+      loop_control:
+        label: "{{ item.1 }}"
+      register: altuser_omvs_results
+      failed_when: false
+
+    - name: Show OMVS segment results
+      ansible.builtin.debug:
+        msg:
+          user: "{{ item.item.1 }}"
+          output: "{{ item.output | default([]) }}"
+          message: "{{ item.msg | default('') }}"
+          failed: "{{ item.failed | default(false) }}"
+          changed: "{{ item.changed | default(false) }}"
+      loop: "{{ altuser_omvs_results.results }}"
+      loop_control:
+        label: "{{ item.item.1 }}"
+
+    # SYS1 is now the default group. Connect each user to its
+    # application-specific group as a secondary group.
+    - name: Connect users to their managed RACF groups
+      ibm.ibm_zos_core.zos_tso_command:
+        commands:
+          - "CONNECT {{ item.1 }} GROUP({{ item.0.key }})"
+        max_rc: 8
+      loop: "{{ users | dict2items | subelements('value') }}"
+      loop_control:
+        label: "{{ item.1 }} -> {{ item.0.key }}"
+      register: connect_managed_group_results
+      failed_when: false
+
+    - name: Show managed RACF group connection results
+      ansible.builtin.debug:
+        msg:
+          user: "{{ item.item.1 }}"
+          group: "{{ item.item.0.key }}"
+          output: "{{ item.output | default([]) }}"
+          message: "{{ item.msg | default('') }}"
+          failed: "{{ item.failed | default(false) }}"
+          changed: "{{ item.changed | default(false) }}"
+      loop: "{{ connect_managed_group_results.results }}"
+      loop_control:
+        label: "{{ item.item.1 }}"
+
+    - name: Create USS home directories
+      ansible.builtin.file:
+        path: "/u/{{ item.1 | lower }}"
+        state: directory
+        owner: "{{ item.1 }}"
+        group: "{{ item.0.key }}"
+        mode: "0750"
+      loop: "{{ users | dict2items | subelements('value') }}"
+      loop_control:
+        label: "/u/{{ item.1 | lower }}"
+      register: home_directory_results
+      failed_when: false
+
+    - name: Show USS home directory results
+      ansible.builtin.debug:
+        msg:
+          user: "{{ item.item.1 }}"
+          path: "/u/{{ item.item.1 | lower }}"
+          failed: "{{ item.failed | default(false) }}"
+          message: "{{ item.msg | default('') }}"
+          changed: "{{ item.changed | default(false) }}"
+      loop: "{{ home_directory_results.results }}"
       loop_control:
         label: "{{ item.item.1 }}"
 
@@ -135,14 +250,26 @@
         label: "{{ item.identity.name }}"
       register: listgrp_results
 
-    - name: Verify users
+    - name: Verify users with TSO and OMVS segments
       ibm.ibm_zos_core.zos_tso_command:
         commands:
-          - "LISTUSER {{ item.1 }}"
+          - "LISTUSER {{ item.1 }} TSO OMVS"
       loop: "{{ users | dict2items | subelements('value') }}"
       loop_control:
         label: "{{ item.1 }}"
       register: listuser_results
+      failed_when: false
+
+    - name: Show LISTUSER results
+      ansible.builtin.debug:
+        msg:
+          user: "{{ item.item.1 }}"
+          output: "{{ item.output | default([]) }}"
+          message: "{{ item.msg | default('') }}"
+          failed: "{{ item.failed | default(false) }}"
+      loop: "{{ listuser_results.results }}"
+      loop_control:
+        label: "{{ item.item.1 }}"
 
     - name: Show LISTGRP results
       ansible.builtin.debug:
