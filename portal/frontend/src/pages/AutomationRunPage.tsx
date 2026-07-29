@@ -22,6 +22,34 @@ const INITIAL_FORM: RunAutomationPayload = {
 
 const MANUAL_JCL_PLAYBOOK = "run_manual_jcl.yml";
 
+const PLAYBOOK_OPTIONS = [
+  "create_qsam_multiple.yml",
+  "create_qsam_using_local_jcl.yml",
+  "create_qsam_via_tso.yml",
+  "create_qsam.yml",
+  "define_ksds.yml",
+  "gather_facts_including_zinfo.yml",
+  "gather_facts.yml",
+  "gather_mf_metrics.yml",
+  "hello_world.yml",
+  "run_jcl_nonfatal.yml",
+  "run_jcl.yml",
+  "run_job_and_copy_selected_dataset_yml",
+  "run_job_and_list_selected_dataset.yml",
+  "run_manual_jcl.yml",
+  "run_sort_1.yml",
+] as const;
+
+const JCL_OPTIONS = [
+  "create_customer_file.jcl",
+  "delete_customer_file.jcl",
+  "hello_world_fail.jcl",
+  "hello_world.jcl",
+  "list_datasets.jcl",
+  "report_customers.jcl",
+  "sort_customers.jcl",
+] as const;
+
 function formatDate(value: string | null): string {
   if (!value) {
     return "Unavailable";
@@ -160,10 +188,8 @@ export function AutomationRunPage() {
           <h2>Submit Automation Run</h2>
 
           <label htmlFor="playbook">Playbook</label>
-          <input
+          <select
             id="playbook"
-            type="text"
-            placeholder="run_jcl.yml"
             value={formData.playbook}
             onChange={(event) => {
               setFormData((previous) => ({
@@ -173,7 +199,14 @@ export function AutomationRunPage() {
               setSubmitError(null);
             }}
             required
-          />
+          >
+            <option value="">Select a playbook</option>
+            {PLAYBOOK_OPTIONS.map((playbook) => (
+              <option key={playbook} value={playbook}>
+                {playbook}
+              </option>
+            ))}
+          </select>
 
           {isManualJclPlaybook ? (
             <>
@@ -194,10 +227,8 @@ export function AutomationRunPage() {
           ) : (
             <>
               <label htmlFor="jcl-file">JCL file</label>
-              <input
+              <select
                 id="jcl-file"
-                type="text"
-                placeholder="jcl/hello_world.jcl"
                 value={formData.jcl_file}
                 onChange={(event) => {
                   setFormData((previous) => ({
@@ -205,7 +236,14 @@ export function AutomationRunPage() {
                     jcl_file: event.target.value,
                   }));
                 }}
-              />
+              >
+                <option value="">Select a JCL file</option>
+                {JCL_OPTIONS.map((jclFile) => (
+                  <option key={jclFile} value={jclFile}>
+                    {jclFile}
+                  </option>
+                ))}
+              </select>
             </>
           )}
 
