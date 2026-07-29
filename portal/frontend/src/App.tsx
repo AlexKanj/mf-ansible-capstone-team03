@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 
 import { AutomationRunPage } from "./pages/AutomationRunPage";
+import { BatchOperationsPage } from "./pages/BatchOperationsPage";
 import { OverallStatusPage } from "./pages/OverallStatusPage";
 
 export default function App() {
@@ -31,6 +32,15 @@ export default function App() {
           >
             Automation Runs
           </NavLink>
+
+          <NavLink
+            to="/batch-operations"
+            className={({ isActive }) =>
+              isActive ? "app-nav__link app-nav__link--active" : "app-nav__link"
+            }
+          >
+            JCL &amp; Batch Operations
+          </NavLink>
         </nav>
 
         <Routes>
@@ -38,6 +48,10 @@ export default function App() {
           <Route
             path="/automation-run"
             element={<AutomationRunPage />}
+          />
+          <Route
+            path="/batch-operations"
+            element={<BatchOperationsPage />}
           />
         </Routes>
       </div>

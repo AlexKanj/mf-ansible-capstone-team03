@@ -82,3 +82,46 @@ export interface AutomationRunStatusResponse {
   created_at: string | null;
   updated_at: string | null;
 }
+
+export type JobStatus =
+  | "successful"
+  | "warning"
+  | "failed"
+  | "abend"
+  | "unknown";
+
+export interface JesResult {
+  return_code: number | null;
+  return_code_display: string | null;
+  status: JobStatus;
+}
+
+export interface AnsibleResult {
+  exit_code: number | null;
+  status: JobStatus;
+}
+
+export interface RecordCounts {
+  input: number | null;
+  output: number | null;
+}
+
+export interface BatchJob {
+  job_name: string;
+  job_id: string;
+  jcl_file: string;
+  student_id: string | null;
+  submitted_at: string | null;
+  automation_duration_seconds: number | null;
+  jes_duration_seconds: number | null;
+  jes: JesResult;
+  ansible: AnsibleResult;
+  records: RecordCounts;
+  spool_preview: string | null;
+  full_output_url: string | null;
+}
+
+export interface BatchOperationsResponse {
+  latest_job: BatchJob | null;
+  recent_jobs: BatchJob[];
+}

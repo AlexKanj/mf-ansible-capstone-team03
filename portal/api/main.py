@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes.automation_runs import router as automation_runs_router
-
+from routes.batch_operations import router as batch_operations_router
 
 PROMETHEUS_URL = os.getenv("PROMETHEUS_URL", "").rstrip("/")
 
@@ -39,6 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(batch_operations_router)
 
 async def prometheus_query(
     client: httpx.AsyncClient,
