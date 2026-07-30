@@ -111,3 +111,5 @@ crash.*.log
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+ansible/report.csv

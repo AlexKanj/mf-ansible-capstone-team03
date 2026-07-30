@@ -1,0 +1,4 @@
+---
+collections:
+  - name: ibm.ibm_zos_cics
+    version: "2.2.1"
