@@ -96,6 +96,8 @@ id_ed25519
 # Ansible
 *.retry
 ansible/.keys/
+ansible/report.csv
+ansible/cics_metrics.prom
 .vault_pass
 
 # Terraform

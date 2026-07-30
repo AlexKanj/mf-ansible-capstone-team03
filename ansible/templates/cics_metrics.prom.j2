@@ -1,0 +1,10 @@
+# HELP cics_region_up Whether the CICS region was returned by CMCI
+# TYPE cics_region_up gauge
+{% for record in result.records | default([]) %}
+cics_region_up{region="{{ record.eyu_cicsname | default('unknown') }}",release="{{ record.release | default('unknown') }}",jobid="{{ record.jobid | default('unknown') }}"} 1
+{% endfor %}
+# HELP cics_region_total_tasks Total tasks reported by CICS
+# TYPE cics_region_total_tasks gauge
+{% for record in result.records | default([]) %}
+cics_region_total_tasks{region="{{ record.eyu_cicsname | default('unknown') }}",release="{{ record.release | default('unknown') }}",jobid="{{ record.jobid | default('unknown') }}"} {{ record.totltasks | default(0) | int }}
+{% endfor %}

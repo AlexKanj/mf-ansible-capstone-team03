@@ -30,6 +30,7 @@ on:
           - racf_rebuild.yml
           - racf_group_sandbox.yml
           - racf_dataset_profiles.yml
+          - report.yml
         default: run_jcl.yml
         required: true
       JCL_FILE:
@@ -74,6 +75,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install CICS Ansible collection
+        run: >-
+          ansible-galaxy collection install
+          ibm.ibm_zos_cics:2.2.1
+          --collections-path /root/.ansible/collections
 
       - name: Run playbook
         working-directory: ansible
@@ -195,9 +202,14 @@ jobs:
             cat provision_metrics.prom >> metrics.prom
           fi
 
+          # Append CICS metrics when the report playbook creates them
+          if [ -f cics_metrics.prom ]; then
+            cat cics_metrics.prom >> metrics.prom
+          fi
 
           # Optionally run the system metrics playbook
-          if [ "${RUN_MF_METRICS}" = "true" ]; then
+          if [ "${RUN_MF_METRICS}" = "true" ] &&
+             [ "${PLAYBOOK_NAME}" != "report.yml" ]; then
             ansible-playbook \
               -u ibmuser \
               -i inventory.yml \
@@ -219,3 +231,13 @@ jobs:
           fi
 
           exit $RESULT
+
+      - name: Upload CICS report
+        if: ${{ inputs.PLAYBOOK_NAME == 'report.yml' && success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cics-report-${{ github.run_number }}
+          path: |
+            ansible/report.csv
+            ansible/cics_metrics.prom
+          if-no-files-found: error
