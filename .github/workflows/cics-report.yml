@@ -1,0 +1,74 @@
+---
+name: Generate CICS CMCI Report
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-report:
+    name: Generate CICS Region Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      CMCI_HOST: ${{ vars.CMCI_HOST }}
+      CMCI_PORT: ${{ vars.CMCI_PORT }}
+      CMCI_SCHEME: ${{ vars.CMCI_SCHEME }}
+      CMCI_CONTEXT: ${{ vars.CMCI_CONTEXT }}
+      CMCI_USER: ${{ secrets.CMCI_USER }}
+      CMCI_PASSWORD: ${{ secrets.CMCI_PASSWORD }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ansible dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ansible-core requests xmltodict
+
+      - name: Install IBM CICS collection
+        run: |
+          ansible-galaxy collection install \
+            -r ansible/requirements.yml
+
+      - name: Validate CMCI configuration
+        run: |
+          if [ -z "$CMCI_HOST" ]; then
+            echo "::error::CMCI_HOST repository variable is missing."
+            exit 1
+          fi
+
+          if [ -z "$CMCI_PORT" ]; then
+            echo "::error::CMCI_PORT repository variable is missing."
+            exit 1
+          fi
+
+          echo "CMCI host configured: $CMCI_HOST"
+          echo "CMCI port configured: $CMCI_PORT"
+          echo "CMCI scheme configured: $CMCI_SCHEME"
+
+      - name: Generate CICS report
+        run: |
+          ansible-playbook ansible/report.yml
+
+      - name: Display generated report
+        run: |
+          echo "Generated CICS report:"
+          cat ansible/report.csv
+
+      - name: Upload CICS CSV report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cics-cmci-report-${{ github.run_number }}
+          path: ansible/report.csv
+          if-no-files-found: error
+          retention-days: 14

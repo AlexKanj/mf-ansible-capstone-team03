@@ -8,3 +8,31 @@ cics_region_up{region="{{ record.eyu_cicsname | default('unknown') }}",release="
 {% for record in result.records | default([]) %}
 cics_region_total_tasks{region="{{ record.eyu_cicsname | default('unknown') }}",release="{{ record.release | default('unknown') }}",jobid="{{ record.jobid | default('unknown') }}"} {{ record.totltasks | default(0) | int }}
 {% endfor %}
+{% set records = result.records | default([]) %}
+# HELP zos_cics_report_success Whether the most recent CICS CMCI report completed successfully.
+# TYPE zos_cics_report_success gauge
+zos_cics_report_success 1
+
+# HELP zos_cics_region_count Number of CICS regions returned by CMCI.
+# TYPE zos_cics_region_count gauge
+zos_cics_region_count {{ records | length }}
+
+# HELP zos_cics_report_last_run_timestamp_seconds Unix timestamp of the latest successful CICS report.
+# TYPE zos_cics_report_last_run_timestamp_seconds gauge
+zos_cics_report_last_run_timestamp_seconds {{ lookup('pipe', 'date +%s') }}
+
+# HELP zos_cics_region_info Information about each CICS region.
+# TYPE zos_cics_region_info gauge
+{% for record in records %}
+{% set region = record.eyu_cicsname | default('unknown') | string | trim | replace('\\', '\\\\') | replace('"', '\\"') %}
+{% set release = record.release | default('unknown') | string | trim | replace('\\', '\\\\') | replace('"', '\\"') %}
+{% set jobid = record.jobid | default('unknown') | string | trim | replace('\\', '\\\\') | replace('"', '\\"') %}
+zos_cics_region_info{region="{{ region }}",release="{{ release }}",jobid="{{ jobid }}"} 1
+{% endfor %}
+
+# HELP zos_cics_tasks_total Total tasks processed by each CICS region.
+# TYPE zos_cics_tasks_total counter
+{% for record in records %}
+{% set region = record.eyu_cicsname | default('unknown') | string | trim | replace('\\', '\\\\') | replace('"', '\\"') %}
+zos_cics_tasks_total{region="{{ region }}"} {{ record.totltasks | default(0) | int }}
+{% endfor %}

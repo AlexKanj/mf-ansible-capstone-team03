@@ -113,3 +113,8 @@ crash.*.log
 .vscode/*
 !.vscode/extensions.json
 .idea/
+<<<<<<< HEAD
+
+ansible/report.csv
+=======
+>>>>>>> 4b8be2d6f88b6f910d92e870b0aa8ae46fa536d7

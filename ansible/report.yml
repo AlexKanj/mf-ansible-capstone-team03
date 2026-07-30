@@ -36,6 +36,40 @@
   # CMCI endpoint settings are loaded from the mainframe inventory host.
 
   vars:
+    cmci_host: >-
+      {{
+        lookup('ansible.builtin.env', 'CMCI_HOST')
+        | default('173.45.66.189', true)
+      }}
+
+    cmci_port: >-
+      {{
+        lookup('ansible.builtin.env', 'CMCI_PORT')
+        | default('1490', true)
+      }}
+
+    scheme: >-
+      {{
+        lookup('ansible.builtin.env', 'CMCI_SCHEME')
+        | default('http', true)
+      }}
+
+    cmci_context: >-
+      {{
+        lookup('ansible.builtin.env', 'CMCI_CONTEXT')
+        | default('', true)
+      }}
+    cmci_user: "{{ lookup('ansible.builtin.env', 'CMCI_USER') }}"
+    cmci_password: "{{ lookup('ansible.builtin.env', 'CMCI_PASSWORD') }}"
+
+    pushgateway_url: >-
+      {{
+        lookup('ansible.builtin.env', 'PUSHGATEWAY_URL')
+        | default('http://50.18.75.128:9091', true)
+      }}
+
+    prometheus_metrics_file: "{{ playbook_dir }}/cics_metrics.prom"
+
     attributes:
       - eyu_cicsname
       - release
@@ -62,14 +96,16 @@
     ############################################################################
     - name: Get information about CICS regions
       ibm.ibm_zos_cics.cmci_get:
-        context: "{{ context }}"
+        context: "{{ cmci_context }}"
         cmci_host: "{{ cmci_host }}"
         cmci_port: "{{ cmci_port | int }}"
-        cmci_user: "{{ cmci_user | default(omit) }}"
-        cmci_password: "{{ cmci_password | default(omit) }}"
+        cmci_user: "{{ cmci_user | default(omit, true) }}"
+        cmci_password: "{{ cmci_password | default(omit, true) }}"
         scheme: "{{ scheme }}"
-        type: "CICSRegion"
+        type: CICSRegion
+        fail_on_nodata: false
       register: result
+      changed_when: false
 
     ############################################################################
     # Print the response from CMCI to the log - useful to see attribute names!
@@ -86,8 +122,48 @@
         dest: "{{ playbook_dir }}/report.csv"
         mode: "0644"
 
+<<<<<<< HEAD
+    - name: Create Prometheus CICS metrics file
+      ansible.builtin.template:
+        src: cics_metrics.prom.j2
+        dest: "{{ prometheus_metrics_file }}"
+        mode: "0644"
+
+    - name: Display generated CICS metrics
+      ansible.builtin.debug:
+        msg: "{{ lookup('ansible.builtin.file', prometheus_metrics_file).splitlines() }}"
+
+    - name: Push CICS metrics to Pushgateway
+      ansible.builtin.uri:
+        url: "{{ pushgateway_url }}/metrics/job/cics_cmci_report"
+        method: PUT
+        body: >-
+          {{
+            lookup(
+              'ansible.builtin.file',
+              prometheus_metrics_file,
+              rstrip=false
+            )
+          }}
+        body_format: raw
+        headers:
+          Content-Type: "text/plain; version=0.0.4"
+        status_code:
+          - 200
+          - 202
+      register: cics_metrics_push
+      changed_when: true
+
+    - name: Confirm CICS metrics push
+      ansible.builtin.debug:
+        msg:
+          - "CICS records: {{ result.records | default([]) | length }}"
+          - "Pushgateway: {{ pushgateway_url }}"
+          - "Push status: {{ cics_metrics_push.status }}"
+=======
     - name: Create Prometheus metrics from CICS report
       ansible.builtin.template:
         src: cics_metrics.prom.j2
         dest: "{{ playbook_dir }}/cics_metrics.prom"
         mode: "0644"
+>>>>>>> 4b8be2d6f88b6f910d92e870b0aa8ae46fa536d7
