@@ -7,7 +7,14 @@ import {
 
 import { AutomationRunPage } from "./pages/AutomationRunPage";
 import { BatchOperationsPage } from "./pages/BatchOperationsPage";
+import { HomePage } from "./pages/HomePage";
 import { OverallStatusPage } from "./pages/OverallStatusPage";
+
+function navLinkClass(isActive: boolean): string {
+  return isActive
+    ? "app-nav__link app-nav__link--active"
+    : "app-nav__link";
+}
 
 export default function App() {
   return (
@@ -18,16 +25,25 @@ export default function App() {
             to="/"
             end
             className={({ isActive }) =>
-              isActive ? "app-nav__link app-nav__link--active" : "app-nav__link"
+              navLinkClass(isActive)
             }
           >
-            Overview
+            Home
+          </NavLink>
+
+          <NavLink
+            to="/overview"
+            className={({ isActive }) =>
+              navLinkClass(isActive)
+            }
+          >
+            Overall Status
           </NavLink>
 
           <NavLink
             to="/automation-run"
             className={({ isActive }) =>
-              isActive ? "app-nav__link app-nav__link--active" : "app-nav__link"
+              navLinkClass(isActive)
             }
           >
             Automation Runs
@@ -36,7 +52,7 @@ export default function App() {
           <NavLink
             to="/batch-operations"
             className={({ isActive }) =>
-              isActive ? "app-nav__link app-nav__link--active" : "app-nav__link"
+              navLinkClass(isActive)
             }
           >
             JCL &amp; Batch Operations
@@ -44,7 +60,11 @@ export default function App() {
         </nav>
 
         <Routes>
-          <Route path="/" element={<OverallStatusPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/overview"
+            element={<OverallStatusPage />}
+          />
           <Route
             path="/automation-run"
             element={<AutomationRunPage />}
@@ -53,6 +73,7 @@ export default function App() {
             path="/batch-operations"
             element={<BatchOperationsPage />}
           />
+          <Route path="*" element={<HomePage />} />
         </Routes>
       </div>
     </BrowserRouter>
