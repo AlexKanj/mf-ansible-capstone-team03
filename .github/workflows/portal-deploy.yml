@@ -1,0 +1,208 @@
+name: Deploy Portal
+
+on:
+  # Deploy main only after the Portal CI workflow succeeds.
+  workflow_run:
+    workflows:
+      - Portal CI
+    branches:
+      - main
+    types:
+      - completed
+
+  # A portal-v* tag publishes and deploys that named portal release.
+  push:
+    tags:
+      - "portal-v*"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: portal-deployment
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  publish:
+    name: Publish portal images
+    environment: portal-production
+    if: >-
+      github.event_name == 'push' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      source_sha: ${{ steps.release.outputs.source_sha }}
+      image_tag: ${{ steps.release.outputs.image_tag }}
+      image_prefix: ${{ steps.release.outputs.image_prefix }}
+
+    steps:
+      - name: Select source revision
+        id: release
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
+          PUSH_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "${EVENT_NAME}" = "workflow_run" ]; then
+            SOURCE_SHA="${WORKFLOW_SHA}"
+            IMAGE_TAG="sha-${SOURCE_SHA:0:12}"
+          else
+            SOURCE_SHA="${PUSH_SHA}"
+            IMAGE_TAG="${RELEASE_TAG}"
+          fi
+
+          IMAGE_PREFIX="ghcr.io/${REPOSITORY,,}"
+
+          echo "source_sha=${SOURCE_SHA}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "image_prefix=${IMAGE_PREFIX}" >> "$GITHUB_OUTPUT"
+
+      - name: Check out tested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.source_sha }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish API image
+        uses: docker/build-push-action@v6
+        with:
+          context: portal/api
+          push: true
+          tags: ${{ steps.release.outputs.image_prefix }}/portal-api:${{ steps.release.outputs.image_tag }}
+          cache-from: type=gha,scope=portal-api
+          cache-to: type=gha,mode=max,scope=portal-api
+
+      - name: Build and publish frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: portal/frontend
+          push: true
+          tags: ${{ steps.release.outputs.image_prefix }}/portal-frontend:${{ steps.release.outputs.image_tag }}
+          build-args: |
+            VITE_GRAFANA_URL=${{ vars.VITE_GRAFANA_URL }}
+            VITE_GITHUB_ACTIONS_URL=${{ vars.VITE_GITHUB_ACTIONS_URL }}
+          cache-from: type=gha,scope=portal-frontend
+          cache-to: type=gha,mode=max,scope=portal-frontend
+
+  deploy:
+    name: Deploy portal
+    needs:
+      - publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: portal-production
+ 
+    steps:
+      - name: Check out deployment definition
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.publish.outputs.source_sha }}
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          PORTAL_SSH_PRIVATE_KEY: ${{ secrets.PORTAL_SSH_PRIVATE_KEY }}
+          PORTAL_SSH_KNOWN_HOSTS: ${{ secrets.PORTAL_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${PORTAL_SSH_PRIVATE_KEY}" > ~/.ssh/portal_deploy
+          chmod 600 ~/.ssh/portal_deploy
+          printf '%s\n' "${PORTAL_SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Create deployment directory
+        env:
+          PORTAL_EC2_HOST: ${{ vars.PORTAL_EC2_HOST }}
+          PORTAL_EC2_USER: ${{ vars.PORTAL_EC2_USER }}
+        run: |
+          ssh -i ~/.ssh/portal_deploy \
+            "${PORTAL_EC2_USER}@${PORTAL_EC2_HOST}" \
+            "mkdir -p ~/team03-portal"
+
+      - name: Upload Compose definition
+        env:
+          PORTAL_EC2_HOST: ${{ vars.PORTAL_EC2_HOST }}
+          PORTAL_EC2_USER: ${{ vars.PORTAL_EC2_USER }}
+        run: |
+          scp -i ~/.ssh/portal_deploy \
+            deploy/portal-compose.yml \
+            "${PORTAL_EC2_USER}@${PORTAL_EC2_HOST}:~/team03-portal/compose.yml"
+
+      - name: Upload portal environment
+        shell: bash
+        env:
+          IMAGE_PREFIX: ${{ needs.publish.outputs.image_prefix }}
+          IMAGE_TAG: ${{ needs.publish.outputs.image_tag }}
+          PROMETHEUS_URL: ${{ vars.PROMETHEUS_URL }}
+          PORTAL_GITHUB_TOKEN: ${{ secrets.PORTAL_GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          PORTAL_EC2_HOST: ${{ vars.PORTAL_EC2_HOST }}
+          PORTAL_EC2_USER: ${{ vars.PORTAL_EC2_USER }}
+        run: |
+          {
+            printf 'PORTAL_API_IMAGE=%s/portal-api\n' "${IMAGE_PREFIX}"
+            printf 'PORTAL_FRONTEND_IMAGE=%s/portal-frontend\n' "${IMAGE_PREFIX}"
+            printf 'IMAGE_TAG=%s\n' "${IMAGE_TAG}"
+            printf 'PROMETHEUS_URL=%s\n' "${PROMETHEUS_URL}"
+            printf 'GITHUB_REPO=%s\n' "${GITHUB_REPO}"
+            printf 'GITHUB_TOKEN=%s\n' "${PORTAL_GITHUB_TOKEN}"
+          } > /tmp/team03-portal.env
+
+          chmod 600 /tmp/team03-portal.env
+          scp -i ~/.ssh/portal_deploy \
+            /tmp/team03-portal.env \
+            "${PORTAL_EC2_USER}@${PORTAL_EC2_HOST}:~/team03-portal/.env"
+          rm /tmp/team03-portal.env
+
+      - name: Pull and restart portal
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PORTAL_EC2_HOST: ${{ vars.PORTAL_EC2_HOST }}
+          PORTAL_EC2_USER: ${{ vars.PORTAL_EC2_USER }}
+        run: |
+          printf '%s' "${GHCR_TOKEN}" |
+            ssh -i ~/.ssh/portal_deploy \
+              "${PORTAL_EC2_USER}@${PORTAL_EC2_HOST}" \
+              "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+
+          ssh -i ~/.ssh/portal_deploy \
+            "${PORTAL_EC2_USER}@${PORTAL_EC2_HOST}" \
+            "cd ~/team03-portal &&
+             chmod 600 .env &&
+             docker compose --env-file .env pull &&
+             docker compose --env-file .env up -d --remove-orphans"
+
+      - name: Verify portal health
+        env:
+          PORTAL_EC2_HOST: ${{ vars.PORTAL_EC2_HOST }}
+          PORTAL_EC2_USER: ${{ vars.PORTAL_EC2_USER }}
+        run: |
+          ssh -i ~/.ssh/portal_deploy \
+            "${PORTAL_EC2_USER}@${PORTAL_EC2_HOST}" \
+            "for attempt in 1 2 3 4 5 6; do
+               if curl --fail --silent http://127.0.0.1/health >/dev/null; then
+                 exit 0
+               fi
+               sleep 5
+             done
+             cd ~/team03-portal
+             docker compose --env-file .env ps
+             exit 1"

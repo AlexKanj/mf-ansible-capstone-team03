@@ -1,0 +1,39 @@
+services:
+  portal-api:
+    image: "${PORTAL_API_IMAGE}:${IMAGE_TAG}"
+    container_name: portal-api
+    restart: unless-stopped
+    environment:
+      PROMETHEUS_URL: "${PROMETHEUS_URL}"
+      GITHUB_REPO: "${GITHUB_REPO}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+    networks:
+      - portal
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=3)
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  portal-frontend:
+    image: "${PORTAL_FRONTEND_IMAGE}:${IMAGE_TAG}"
+    container_name: portal-frontend
+    restart: unless-stopped
+    depends_on:
+      portal-api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - portal
+
+networks:
+  portal:
+    name: team03-portal
