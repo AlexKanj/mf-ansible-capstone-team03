@@ -1,0 +1,4 @@
+{{ attributes | join(',') }}
+{% for record in result.records | default([]) %}
+{% for attribute in attributes %}"{{ record[attribute] | default('') | string | replace('"', '""') }}"{% if not loop.last %},{% endif %}{% endfor %}
+{% endfor %}
