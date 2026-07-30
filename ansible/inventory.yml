@@ -13,6 +13,9 @@ all:
         ansible_pipelining: true
         ansible_ssh_transfer_method: scp
         ansible_scp_extra_args: -O
+        cmci_host: 173.45.66.189
+        cmci_port: 1490
+        scheme: http
         # z/OS Python and ZOAU runtime environment
         environment_vars:
           _BPXK_AUTOCVT: ON

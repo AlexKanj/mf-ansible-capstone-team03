@@ -33,25 +33,7 @@
   hosts: "localhost"
   gather_facts: false
 
-  vars_prompt:
-  #   - name: cmci_host
-  #     prompt: Target CMCI hostname
-  #     private: false
-  #   - name: cmci_port
-  #     prompt: Target CMCI port
-  #     private: false
-  #   - name: scheme
-  #     prompt: CMCI scheme
-  #     private: false
-  #     default: "https"
-  # - name: context
-  #   prompt: Target CPSM context
-    # private: false
-  #   - name: cmci_user
-  #     prompt: CMCI user name (leave blank for unauthenticated)
-  #     private: false
-  #   - name: cmci_password
-  #     prompt: CMCI password (leave blank for unauthenticated)
+  # CMCI endpoint settings are loaded from the mainframe inventory host.
 
   vars:
     cmci_host: >-
@@ -93,6 +75,10 @@
       - release
       - jobid
       - totltasks
+    cmci_host: "{{ hostvars['mainframe']['cmci_host'] }}"
+    cmci_port: "{{ hostvars['mainframe']['cmci_port'] }}"
+    scheme: "{{ hostvars['mainframe']['scheme'] }}"
+    context: "{{ hostvars['mainframe']['context'] | default('') }}"
 
   tasks:
     ############################################################################
@@ -136,6 +122,7 @@
         dest: "{{ playbook_dir }}/report.csv"
         mode: "0644"
 
+<<<<<<< HEAD
     - name: Create Prometheus CICS metrics file
       ansible.builtin.template:
         src: cics_metrics.prom.j2
@@ -173,3 +160,10 @@
           - "CICS records: {{ result.records | default([]) | length }}"
           - "Pushgateway: {{ pushgateway_url }}"
           - "Push status: {{ cics_metrics_push.status }}"
+=======
+    - name: Create Prometheus metrics from CICS report
+      ansible.builtin.template:
+        src: cics_metrics.prom.j2
+        dest: "{{ playbook_dir }}/cics_metrics.prom"
+        mode: "0644"
+>>>>>>> 4b8be2d6f88b6f910d92e870b0aa8ae46fa536d7
