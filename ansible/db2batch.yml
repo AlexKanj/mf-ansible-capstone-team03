@@ -32,7 +32,7 @@
       path: /tmp/db2_query.jcl
       regexp: '\r'
       replace: ''
-      delegate_to: localhost
+    delegate_to: localhost
 
   # - name: Inspect raw bytes of rendered JCL
   #   shell: cat -A /tmp/db2_query.jcl
