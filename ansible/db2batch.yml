@@ -27,6 +27,13 @@
       dest: /tmp/db2_query.jcl
     delegate_to: localhost
 
+  - name: Ensure rendered JCL uses Unix line endings
+      ansible.builtin.replace:
+      path: /tmp/db2_query.jcl
+      regexp: '\r'
+      replace: ''
+      delegate_to: localhost
+
   # - name: Inspect raw bytes of rendered JCL
   #   shell: cat -A /tmp/db2_query.jcl
   #   delegate_to: localhost
@@ -47,7 +54,7 @@
 
   - name: Submit job
     ibm.ibm_zos_core.zos_job_submit:
-      src: templates/db2_query.jcl.j2
+      src: /tmp/db2_query.jcl
       location: LOCAL
       wait_time_s: 300
     register: job
