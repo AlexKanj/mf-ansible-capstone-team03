@@ -31,6 +31,7 @@ on:
           - racf_group_sandbox.yml
           - racf_dataset_profiles.yml
           - report.yml
+          - db2batch.yml
         default: run_jcl.yml
         required: true
       JCL_FILE:
