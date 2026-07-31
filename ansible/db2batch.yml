@@ -39,19 +39,29 @@
       msg: "{{ job }}"
 
   # extract data to .prom for Grafana
-  - name: Extract SYSTSPRT output text
+  - name: Extract SYSPRINT output text
     set_fact:
       _db2_output: >-
         {{ (job.jobs[0].ddnames
-            | selectattr('ddname', 'equalto', 'SYSTSPRT')
+            | selectattr('ddname', 'equalto', 'SYSPRINT')
             | map(attribute='content')
             | first) | join('\n') }}
 
-  - name: Parse METRIC/VALUE pairs from DB2 output
+  - name: Extract DB2 creators
     set_fact:
-      _db2_pairs: >-
+      _db2_creators: >-
         {{ _db2_output
-           | regex_findall('^\s*([A-Za-z0-9_$#@]+)\s+(\d+)\s*$', multiline=True) }}
+          | regex_findall('\d+_\|\s+([A-Za-z0-9_$#@]+)\s+\|') }}
+
+  - name: Extract DB2 values
+    set_fact:
+      _db2_values: >-
+        {{ _db2_output
+          | regex_findall('\d+_\|\s+(\d+)\s+\|') }}
+
+  - name: Combine DB2 creators and values
+    set_fact:
+      _db2_pairs: "{{ _db2_creators | zip(_db2_values) | list }}"
 
   - name: Determine job success
     set_fact:
