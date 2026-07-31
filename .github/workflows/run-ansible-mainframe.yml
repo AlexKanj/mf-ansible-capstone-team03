@@ -77,11 +77,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install CICS Ansible collection
-        run: >-
-          ansible-galaxy collection install
-          ibm.ibm_zos_cics:2.2.1
-          --collections-path /root/.ansible/collections
+      - name: Install Ansible collections
+        run: |
+          ansible-galaxy collection install \
+            ibm.ibm_zos_core:1.9.3 \
+            ibm.ibm_zos_cics:2.2.1 \
+            --collections-path /root/.ansible/collections
+
+          ansible-galaxy collection list
 
       - name: Run playbook
         working-directory: ansible
