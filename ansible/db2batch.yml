@@ -27,36 +27,11 @@
       dest: /tmp/db2_query.jcl
     delegate_to: localhost
 
-  - name: Ensure rendered JCL uses Unix line endings
-    ansible.builtin.replace:
-      path: /tmp/db2_query.jcl
-      regexp: '\r'
-      replace: ''
-    delegate_to: localhost
-
-  # - name: Inspect raw bytes of rendered JCL
-  #   shell: cat -A /tmp/db2_query.jcl
-  #   delegate_to: localhost
-  #   register: raw_jcl
-
-  # - name: Show raw bytes
-  #   debug:
-  #     msg: "{{ raw_jcl.stdout_lines }}"
-
-  # - name: Check line lengths
-  #   shell: awk '{ print length, $0 }' /tmp/db2_query.jcl
-  #   delegate_to: localhost
-  #   register: line_lengths
-
-  # - name: Show line lengths
-  #   debug:
-  #     msg: "{{ line_lengths.stdout_lines }}"
-
   - name: Submit job
     ibm.ibm_zos_core.zos_job_submit:
       src: /tmp/db2_query.jcl
       location: LOCAL
-      wait_time_s: 300
+      wait_time_s: 60
     register: job
 
   - name: Dump output
