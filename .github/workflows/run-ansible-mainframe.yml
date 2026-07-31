@@ -207,6 +207,11 @@ jobs:
             cat cics_metrics.prom >> metrics.prom
           fi
 
+          # append db2batch data
+          if [ -f db2_metrics.prom ]; then
+            cat db2_metrics.prom >> metrics.prom
+          fi
+
           # Optionally run the system metrics playbook
           if [ "${RUN_MF_METRICS}" = "true" ] &&
              [ "${PLAYBOOK_NAME}" != "report.yml" ]; then

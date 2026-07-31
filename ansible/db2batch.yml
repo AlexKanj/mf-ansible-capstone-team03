@@ -1,0 +1,66 @@
+---
+- name: Submit DB2 batch job to execute a query
+  hosts: zos
+  gather_facts: false
+  environment: "{{ environment_vars }}"
+
+  vars:
+    job_owner: IBMUSER
+    db2_subsystem: DBD1
+    sql: |
+      SELECT CREATOR AS METRIC,
+             COUNT(*) AS VALUE
+      FROM SYSIBM.SYSTABLES
+      GROUP BY CREATOR;
+
+  tasks:
+
+  - name: Create SQL job
+    template:
+      src: templates/db2_query.jcl.j2
+      dest: /tmp/db2_query.jcl
+    delegate_to: localhost
+
+  - name: Submit job
+    ibm.ibm_zos_core.zos_job_submit:
+      src: /tmp/db2_query.jcl
+      location: LOCAL
+      wait_time_s: 60
+    register: job
+
+  - name: Dump output
+    debug:
+      msg: "{{ job }}"
+
+  # extract data to .prom for Grafana
+  - name: Extract SYSTSPRT output text
+    set_fact:
+      _db2_output: >-
+        {{ (job.jobs[0].ddnames
+            | selectattr('ddname', 'equalto', 'SYSTSPRT')
+            | map(attribute='content')
+            | first) | join('\n') }}
+
+  - name: Parse METRIC/VALUE pairs from DB2 output
+    set_fact:
+      _db2_pairs: >-
+        {{ _db2_output
+           | regex_findall('^\s*([A-Za-z0-9_$#@]+)\s+(\d+)\s*$', multiline=True) }}
+
+  - name: Determine job success
+    set_fact:
+      _db2_success: "{{ 1 if job.jobs[0].ret_code.code == 0 else 0 }}"
+
+  - name: Write db2_metrics.prom
+    copy:
+      dest: "{{ playbook_dir }}/db2_metrics.prom"
+      content: |
+        # HELP zos_db2_table_count_by_creator Count of SYSIBM.SYSTABLES rows grouped by CREATOR
+        # TYPE zos_db2_table_count_by_creator gauge
+        {% for pair in _db2_pairs %}
+        zos_db2_table_count_by_creator{host="{{ inventory_hostname }}",creator="{{ pair[0] }}"} {{ pair[1] }}
+        {% endfor %}
+        # HELP zos_db2_batch_job_success Whether the DB2 batch job completed successfully
+        # TYPE zos_db2_batch_job_success gauge
+        zos_db2_batch_job_success{host="{{ inventory_hostname }}"} {{ _db2_success }}
+    delegate_to: localhost
