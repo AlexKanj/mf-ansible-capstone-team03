@@ -28,7 +28,7 @@
     delegate_to: localhost
 
   - name: Ensure rendered JCL uses Unix line endings
-      ansible.builtin.replace:
+    ansible.builtin.replace:
       path: /tmp/db2_query.jcl
       regexp: '\r'
       replace: ''
