@@ -25,7 +25,6 @@
     ibm.ibm_zos_core.zos_job_submit:
       src: /tmp/db2_query.jcl
       location: LOCAL
-      wait_time_s: 60
     register: job
 
   - name: Dump output
