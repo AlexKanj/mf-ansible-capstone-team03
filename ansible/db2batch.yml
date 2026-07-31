@@ -21,12 +21,32 @@
       dest: /tmp/db2_query.jcl
     delegate_to: localhost
 
+<<<<<<< HEAD
   - name: Create SQL job
     template:
       src: templates/db2_query.jcl.j2
       dest: /tmp/db2_query.jcl
     delegate_to: localhost
 
+=======
+
+  - name: Ensure rendered JCL uses Unix line endings
+    ansible.builtin.replace:
+      path: /tmp/db2_query.jcl
+      regexp: '\r'
+      replace: ''
+    delegate_to: localhost
+
+
+  - name: Inspect rendered JCL
+    ansible.builtin.shell: |
+      wc -c /tmp/db2_query.jcl
+      awk '{ print NR, length($0) }' /tmp/db2_query.jcl
+      file /tmp/db2_query.jcl
+    delegate_to: localhost
+    changed_when: false
+
+>>>>>>> 5415c87 (Changes)
   - name: Submit job
     ibm.ibm_zos_core.zos_job_submit:
       src: /tmp/db2_query.jcl

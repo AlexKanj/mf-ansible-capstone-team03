@@ -1,0 +1,40 @@
+---
+- name: Query defined programs in CICS
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    cmci_host: "{{ hostvars['mainframe']['cmci_host'] }}"
+    cmci_port: "{{ hostvars['mainframe']['cmci_port'] }}"
+    scheme: "{{ hostvars['mainframe']['scheme'] }}"
+    context: "{{ hostvars['mainframe']['context'] | default('') }}"
+
+  tasks:
+    - name: Make sure CMCI module dependencies are installed
+      ansible.builtin.pip:
+        name:
+          - requests
+          - xmltodict
+
+    - name: Retrieve PROGRAM resources
+      ibm.ibm_zos_cics.cmci_get:
+        cmci_host: "{{ cmci_host }}"
+        cmci_port: "{{ cmci_port | int }}"
+        cmci_user: "{{ cmci_user | default(omit) }}"
+        cmci_password: "{{ cmci_password | default(omit) }}"
+        scheme: "{{ scheme }}"
+        context: "{{ context }}"
+        type: CICSProgram
+        resources:
+          filter:
+            program: "MDG*"
+      register: result
+
+    - name: Display program name list
+      ansible.builtin.debug:
+        var: program_names
+      vars:
+        program_names: >-
+          {{ result.records
+             | map(attribute='program')
+             | list }}

@@ -1,0 +1,33 @@
+---
+- name: Submit DB2 batch job to execute a query
+  hosts: zos
+  gather_facts: false
+  environment: "{{ environment_vars }}"
+
+  vars:
+    job_owner: GAMA16
+    db2_subsystem: DBD1
+    sql: |
+      SELECT CREATOR AS METRIC,
+             COUNT(*) AS VALUE
+      FROM SYSIBM.SYSTABLES
+      GROUP BY CREATOR;
+
+  tasks:
+
+  - name: Create SQL job
+    template:
+      src: jcl/db2_query.jcl
+      dest: /tmp/db2_query.jcl
+    delegate_to: localhost
+
+  - name: Submit job
+    ibm.ibm_zos_core.zos_job_submit:
+      src: /tmp/db2_query.jcl
+      location: LOCAL
+      wait_time_s: 60
+    register: job
+
+  - name: Dump output
+    debug:
+      msg: "{{ job }}"

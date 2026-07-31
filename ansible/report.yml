@@ -107,6 +107,20 @@
       register: result
       changed_when: false
 
+    - name: Retrieve MDG program resources
+      ibm.ibm_zos_cics.cmci_get:
+        cmci_host: "{{ cmci_host }}"
+        cmci_port: "{{ cmci_port | int }}"
+        cmci_user: "{{ cmci_user | default(omit) }}"
+        cmci_password: "{{ cmci_password | default(omit) }}"
+        scheme: "{{ scheme }}"
+        context: "{{ context }}"
+        type: CICSProgram
+        resources:
+          filter:
+            program: "MDG*"
+      register: cics_program_result
+
     ############################################################################
     # Print the response from CMCI to the log - useful to see attribute names!
     ############################################################################

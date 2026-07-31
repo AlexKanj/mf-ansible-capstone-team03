@@ -8,6 +8,7 @@ cics_region_up{region="{{ record.eyu_cicsname | default('unknown') }}",release="
 {% for record in result.records | default([]) %}
 cics_region_total_tasks{region="{{ record.eyu_cicsname | default('unknown') }}",release="{{ record.release | default('unknown') }}",jobid="{{ record.jobid | default('unknown') }}"} {{ record.totltasks | default(0) | int }}
 {% endfor %}
+<<<<<<< HEAD
 {% set records = result.records | default([]) %}
 # HELP zos_cics_report_success Whether the most recent CICS CMCI report completed successfully.
 # TYPE zos_cics_report_success gauge
@@ -35,4 +36,55 @@ zos_cics_region_info{region="{{ region }}",release="{{ release }}",jobid="{{ job
 {% for record in records %}
 {% set region = record.eyu_cicsname | default('unknown') | string | trim | replace('\\', '\\\\') | replace('"', '\\"') %}
 zos_cics_tasks_total{region="{{ region }}"} {{ record.totltasks | default(0) | int }}
+=======
+# HELP cics_region_current_tasks Current number of tasks
+# TYPE cics_region_current_tasks gauge
+{% for record in result.records | default([]) %}
+cics_region_current_tasks{region="{{ record.eyu_cicsname | default('unknown') }}"} {{ record.currtasks | int }}
+{% endfor %}
+# HELP cics_region_max_tasks Maximum configured number of tasks
+# TYPE cics_region_max_tasks gauge
+{% for record in result.records | default([]) %}
+cics_region_max_tasks{region="{{ record.eyu_cicsname | default('unknown') }}"} {{ record.maxtasks | int }}
+{% endfor %}
+# HELP cics_region_peak_tasks Peak number of tasks since statistics reset
+# TYPE cics_region_peak_tasks gauge
+{% for record in result.records | default([]) %}
+cics_region_peak_tasks{region="{{ record.eyu_cicsname | default('unknown') }}"} {{ record.peaktasks | int }}
+{% endfor %}
+# HELP cics_region_task_utilization_ratio Current tasks divided by maximum tasks
+# TYPE cics_region_task_utilization_ratio gauge
+{% for record in result.records | default([]) %}
+cics_region_task_utilization_ratio{region="{{ record.eyu_cicsname | default('unknown') }}"} {{ ((record.currtasks | float) / (record.maxtasks | float)) if (record.maxtasks | int) > 0 else 0 }}
+{% endfor %}
+# HELP cics_region_active_user_transactions Current active user transactions
+# TYPE cics_region_active_user_transactions gauge
+{% for record in result.records | default([]) %}
+cics_region_active_user_transactions{region="{{ record.eyu_cicsname | default('unknown') }}"} {{ record.curactvusrtr | int }}
+{% endfor %}
+# HELP cics_region_queued_user_transactions Current queued user transactions
+# TYPE cics_region_queued_user_transactions gauge
+{% for record in result.records | default([]) %}
+cics_region_queued_user_transactions{region="{{ record.eyu_cicsname | default('unknown') }}"} {{ record.curquedusrtr | int }}
+{% endfor %}
+# HELP cics_region_maxtask_limit_hits_total Number of times the MAXTASK limit was reached
+# TYPE cics_region_maxtask_limit_hits_total counter
+{% for record in result.records | default([]) %}
+cics_region_maxtask_limit_hits_total{region="{{ record.eyu_cicsname | default('unknown') }}"} {{ record.maxtrcnt | int }}
+{% endfor %}
+# HELP cics_region_status CICS region status represented as a labeled gauge
+# TYPE cics_region_status gauge
+{% for record in result.records | default([]) %}
+cics_region_status{region="{{ record.eyu_cicsname | default('unknown') }}",status="{{ record.cicsstatus }}"} 1
+{% endfor %}
+# HELP cics_program_present Whether a matching CICS program was returned
+# TYPE cics_program_present gauge
+{% for program in cics_program_result.records | default([]) %}
+cics_program_present{region="{{ program.eyu_cicsname | default('unknown') }}",program="{{ program.program | default('unknown') }}",status="{{ program.status | default('unknown') }}"} 1
+{% endfor %}
+# HELP cics_program_enabled Whether a matching CICS program is enabled
+# TYPE cics_program_enabled gauge
+{% for program in cics_program_result.records | default([]) %}
+cics_program_enabled{region="{{ program.eyu_cicsname | default('unknown') }}",program="{{ program.program | default('unknown') }}"} {{ 1 if (program.status | default('')) == 'ENABLED' else 0 }}
+>>>>>>> 10e84fe (Changes)
 {% endfor %}
