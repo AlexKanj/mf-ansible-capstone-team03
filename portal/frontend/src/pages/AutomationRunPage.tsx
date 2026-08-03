@@ -25,23 +25,6 @@ const INITIAL_FORM: RunAutomationPayload = {
 
 const MANUAL_JCL_PLAYBOOK = "run_manual_jcl.yml";
 
-const PLAYBOOK_OPTIONS = [
-  "gather_mf_metrics.yml",
-  "hello_world.yml",
-  "run_jcl_nonfatal.yml",
-  "run_jcl.yml",
-  "run_manual_jcl.yml",
-] as const;
-
-const JCL_OPTIONS = [
-  "create_customer_file.jcl",
-  "delete_customer_file.jcl",
-  "hello_world_fail.jcl",
-  "hello_world.jcl",
-  "list_datasets.jcl",
-  "report_customers.jcl",
-  "sort_customers.jcl",
-] as const;
 const JCL_FILE_PLAYBOOKS = new Set([
   "run_jcl.yml",
   "run_jcl_nonfatal.yml",
