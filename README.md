@@ -1,6 +1,6 @@
 # Mainframe Customer Processing Platform
 
-Ansible-based automation for running JCL jobs and collecting operational metrics from a z/OS mainframe, integrated with GitHub Actions and Prometheus/Grafana for observability.
+Ansible-based automation for running JCL jobs and collecting operational metrics from a z/OS mainframe, integrated with GitHub Actions and Prometheus/Grafana for observability. Test
 
 ---
 
@@ -27,11 +27,8 @@ ansible/
 
   # Playbooks
   ping.yml               # Connectivity check
-  gather_facts.yml        # Collect z/OS system facts (CPU, IPL info)
   gather_mf_metrics.yml  # Push dataset count + job counts to Prometheus
   run_jcl.yml            # Generic JCL runner — submit any file from jcl/
-  list_active_started_tasks.yml
-  list_sys1_proclib_members.yml
 
   jcl/                   # JCL job library — add new .jcl files here
     hello_world.jcl

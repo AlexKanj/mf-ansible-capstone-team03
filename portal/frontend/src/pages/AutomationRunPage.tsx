@@ -24,6 +24,7 @@ const INITIAL_FORM: RunAutomationPayload = {
 };
 
 const MANUAL_JCL_PLAYBOOK = "run_manual_jcl.yml";
+
 const JCL_FILE_PLAYBOOKS = new Set([
   "run_jcl.yml",
   "run_jcl_nonfatal.yml",
