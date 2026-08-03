@@ -8,11 +8,7 @@ export type PlatformStatus =
   | "degraded"
   | "unknown";
 
-export type ManagedUser =
-  | "U03D01"
-  | "U03D02"
-  | "U03T01"
-  | "P03PTU";
+export type ManagedUser = string;
 
 export type BooleanString = "true" | "false";
 
@@ -141,4 +137,67 @@ export interface BatchJob {
 export interface BatchOperationsResponse {
   latest_job: BatchJob | null;
   recent_jobs: BatchJob[];
+}
+
+export interface RacfGroup {
+  identity: {
+    name: string;
+  };
+  hierarchy: {
+    owner: string;
+    superior_group: string;
+  };
+  omvs: {
+    gid: number;
+  };
+  installation_data: string;
+  model_data_set: string;
+  metadata: {
+    created: string;
+  };
+  subgroups: string[];
+  connected_users: string[];
+}
+
+export interface DatasetProfile {
+  userid: string;
+  access: string;
+}
+
+export interface RacfManagedState {
+  users: Record<string, string[]>;
+  racf_groups: RacfGroup[];
+  dataset_profiles: DatasetProfile[];
+  profile_uacc: string;
+  meta?: {
+    updated_at?: string;
+    updated_by?: string;
+    version?: number;
+  };
+}
+
+export interface RacfManagedStateResponse {
+  etag: string | null;
+  version_id: string | null;
+  managed_users: string[];
+  state: RacfManagedState;
+  rebuild?: AutomationRunDispatchResponse;
+}
+
+export interface AddManagedUserPayload {
+  userid: string;
+  group: string;
+  access: string;
+}
+
+export interface AddManagedGroupPayload {
+  name: string;
+  owner: string;
+  superior_group: string;
+  gid: number;
+}
+
+export interface UpdateMembershipPayload {
+  userid: string;
+  group: string;
 }

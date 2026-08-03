@@ -252,6 +252,13 @@ export function HomePage() {
               Explore Automation Runs
             </Link>
 
+            <Link
+              className="home-button home-button--secondary"
+              to="/racf-management"
+            >
+              Manage RACF Users & Groups
+            </Link>
+
             <a
               className="home-button home-button--secondary"
               href={grafanaUrl}

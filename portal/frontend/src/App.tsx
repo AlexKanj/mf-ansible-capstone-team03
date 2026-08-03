@@ -9,6 +9,7 @@ import { AutomationRunPage } from "./pages/AutomationRunPage";
 import { BatchOperationsPage } from "./pages/BatchOperationsPage";
 import { HomePage } from "./pages/HomePage";
 import { OverallStatusPage } from "./pages/OverallStatusPage";
+import { RacfManagementPage } from "./pages/RacfManagementPage";
 
 function navLinkClass(isActive: boolean): string {
   return isActive
@@ -57,6 +58,15 @@ export default function App() {
           >
             JCL &amp; Batch Operations
           </NavLink>
+
+          <NavLink
+            to="/racf-management"
+            className={({ isActive }) =>
+              navLinkClass(isActive)
+            }
+          >
+            RACF Management
+          </NavLink>
         </nav>
 
         <Routes>
@@ -72,6 +82,10 @@ export default function App() {
           <Route
             path="/batch-operations"
             element={<BatchOperationsPage />}
+          />
+          <Route
+            path="/racf-management"
+            element={<RacfManagementPage />}
           />
           <Route path="*" element={<HomePage />} />
         </Routes>

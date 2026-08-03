@@ -1,11 +1,15 @@
 import type {
+  AddManagedGroupPayload,
+  AddManagedUserPayload,
   AutomationRunOptionsResponse,
   AutomationRunDispatchResponse,
   AutomationRunStatusResponse,
   BatchOperationsResponse,
   ManagedUser,
   OverviewResponse,
+  RacfManagedStateResponse,
   RunAutomationPayload,
+  UpdateMembershipPayload,
 } from "../types/api";
 
 const API_BASE_URL = (
@@ -137,4 +141,171 @@ export async function getBatchOperations(
   }
 
   return response.json() as Promise<BatchOperationsResponse>;
+}
+
+function withIfMatchHeader(etag?: string): Record<string, string> {
+  if (!etag) {
+    return {};
+  }
+
+  return {
+    "If-Match": etag,
+  };
+}
+
+export async function getRacfManagedState(
+  signal?: AbortSignal,
+): Promise<RacfManagedStateResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/racf-managed-state`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal,
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Managed RACF state request failed with HTTP ${response.status}`,
+    );
+  }
+
+  return response.json() as Promise<RacfManagedStateResponse>;
+}
+
+export async function addManagedUser(
+  payload: AddManagedUserPayload,
+  etag?: string,
+): Promise<RacfManagedStateResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/racf-managed-state/users`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...withIfMatchHeader(etag),
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Add user failed with HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<RacfManagedStateResponse>;
+}
+
+export async function removeManagedUser(
+  userid: string,
+  etag?: string,
+): Promise<RacfManagedStateResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/racf-managed-state/users/${encodeURIComponent(userid)}`,
+    {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        ...withIfMatchHeader(etag),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Remove user failed with HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<RacfManagedStateResponse>;
+}
+
+export async function addManagedGroup(
+  payload: AddManagedGroupPayload,
+  etag?: string,
+): Promise<RacfManagedStateResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/racf-managed-state/groups`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...withIfMatchHeader(etag),
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Add group failed with HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<RacfManagedStateResponse>;
+}
+
+export async function removeManagedGroup(
+  groupName: string,
+  etag?: string,
+): Promise<RacfManagedStateResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/racf-managed-state/groups/${encodeURIComponent(groupName)}`,
+    {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        ...withIfMatchHeader(etag),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Remove group failed with HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<RacfManagedStateResponse>;
+}
+
+export async function updateMembership(
+  payload: UpdateMembershipPayload,
+  etag?: string,
+): Promise<RacfManagedStateResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/racf-managed-state/memberships`,
+    {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...withIfMatchHeader(etag),
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Update membership failed with HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<RacfManagedStateResponse>;
+}
+
+export async function triggerRacfRebuild(): Promise<AutomationRunDispatchResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/racf-managed-state/rebuild`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`RACF rebuild trigger failed with HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<AutomationRunDispatchResponse>;
 }

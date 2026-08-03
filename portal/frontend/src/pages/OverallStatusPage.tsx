@@ -5,20 +5,16 @@ import {
 } from "react";
 
 import { StatusCard } from "../components/StatusCard";
-import { getOverview } from "../services/api";
+import {
+  getOverview,
+  getRacfManagedState,
+} from "../services/api";
 import type {
   ComponentStatus,
   ManagedUser,
   OverviewResponse,
   PlatformStatus,
 } from "../types/api";
-
-const MANAGED_USERS: ManagedUser[] = [
-  "U03D01",
-  "U03D02",
-  "U03T01",
-  "P03PTU",
-];
 
 function componentCardStatus(
   status: ComponentStatus,
@@ -67,6 +63,11 @@ function formatTimestamp(
 }
 
 export function OverallStatusPage() {
+  const [managedUsers, setManagedUsers] =
+    useState<ManagedUser[]>([
+      "P03PTU",
+    ]);
+
   const [userid, setUserid] =
     useState<ManagedUser>("P03PTU");
 
@@ -116,6 +117,30 @@ export function OverallStatusPage() {
     },
     [],
   );
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void getRacfManagedState(controller.signal)
+      .then((state) => {
+        const users = state.managed_users;
+        if (!users.length) {
+          return;
+        }
+
+        setManagedUsers(users);
+        setUserid((current) =>
+          users.includes(current) ? current : users[0],
+        );
+      })
+      .catch(() => {
+        // Keep fallback managed users when RACF state cannot be read.
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     void loadOverview(userid, true);
@@ -197,7 +222,7 @@ export function OverallStatusPage() {
               );
             }}
           >
-            {MANAGED_USERS.map((user) => (
+            {managedUsers.map((user) => (
               <option key={user} value={user}>
                 {user}
               </option>

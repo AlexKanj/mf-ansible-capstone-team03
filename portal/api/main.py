@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Any, Literal
+from typing import Any
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query
@@ -10,15 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routes.automation_runs import router as automation_runs_router
 from routes.batch_operations import router as batch_operations_router
+from routes.racf_managed_state import router as racf_managed_state_router
 
 PROMETHEUS_URL = os.getenv("PROMETHEUS_URL", "").rstrip("/")
-
-ManagedUser = Literal[
-    "U03D01",
-    "U03D02",
-    "U03T01",
-    "P03PTU",
-]
 
 app = FastAPI(
     title="Team 03 Cross-Platform Operations API",
@@ -35,11 +29,12 @@ app.add_middleware(
         "http://127.0.0.1:5173",
     ],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
 app.include_router(batch_operations_router)
+app.include_router(racf_managed_state_router)
 
 async def prometheus_query(
     client: httpx.AsyncClient,
@@ -113,7 +108,7 @@ async def health() -> dict[str, str]:
 
 @app.get("/api/overview")
 async def get_overview(
-    userid: ManagedUser = Query(default="P03PTU"),
+    userid: str = Query(default="P03PTU"),
 ) -> dict[str, Any]:
     """Return the current platform state for one managed RACF user."""
 

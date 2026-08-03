@@ -9,8 +9,9 @@
 
   environment: "{{ environment_vars }}"
 
-  vars_files:
-    - racf_vars.yml
+  pre_tasks:
+    - name: Load managed RACF configuration
+      ansible.builtin.include_tasks: tasks/load_racf_config.yml
 
   vars:
     racf_action_effective: "{{ racf_action | default('delete') }}"
