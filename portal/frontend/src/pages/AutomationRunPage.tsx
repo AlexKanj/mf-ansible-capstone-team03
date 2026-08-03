@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { Link } from "react-router-dom";
 
 import {
   getAutomationRunOptions,
@@ -223,6 +224,12 @@ export function AutomationRunPage() {
             Trigger the automation GitHub workflow and manually
             check execution status.
           </p>
+          <p className="page-description">
+            Need to manage users and groups first? Open the RACF Management page.
+          </p>
+          <div className="portal-links">
+            <Link to="/racf-management">Open RACF Management</Link>
+          </div>
         </div>
       </header>
 

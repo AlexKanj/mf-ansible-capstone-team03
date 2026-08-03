@@ -1,0 +1,72 @@
+---
+# Load RACF managed state from S3 when configured. Fall back to local vars file.
+- name: Determine RACF config source
+  ansible.builtin.set_fact:
+    racf_config_bucket_effective: "{{ racf_config_s3_bucket | default(lookup('ansible.builtin.env', 'RACF_CONFIG_S3_BUCKET'), true) | default('', true) }}"
+    racf_config_key_effective: "{{ racf_config_s3_key | default(lookup('ansible.builtin.env', 'RACF_CONFIG_S3_KEY'), true) | default('racf/managed-state.json', true) }}"
+
+- name: Load RACF config from local vars file
+  ansible.builtin.include_vars:
+    file: racf_vars.yml
+    name: racf_state_loaded
+  when: racf_config_bucket_effective | length == 0
+
+- name: Create temporary file for S3 RACF config
+  ansible.builtin.tempfile:
+    state: file
+    suffix: racf-state.json
+  register: racf_state_tempfile
+  delegate_to: localhost
+  when: racf_config_bucket_effective | length > 0
+
+- name: Download RACF config from S3
+  amazon.aws.s3_object:
+    bucket: "{{ racf_config_bucket_effective }}"
+    object: "{{ racf_config_key_effective }}"
+    mode: get
+    dest: "{{ racf_state_tempfile.path }}"
+  delegate_to: localhost
+  register: racf_s3_download
+  when: racf_config_bucket_effective | length > 0
+
+- name: Load RACF config downloaded from S3
+  ansible.builtin.include_vars:
+    file: "{{ racf_state_tempfile.path }}"
+    name: racf_state_loaded
+  when: racf_config_bucket_effective | length > 0
+
+- name: Remove temporary RACF config file
+  ansible.builtin.file:
+    path: "{{ racf_state_tempfile.path }}"
+    state: absent
+  delegate_to: localhost
+  failed_when: false
+  when: racf_config_bucket_effective | length > 0
+
+- name: Validate RACF config structure
+  ansible.builtin.assert:
+    that:
+      - racf_state_loaded.users is defined
+      - racf_state_loaded.racf_groups is defined
+      - racf_state_loaded.dataset_profiles is defined
+      - racf_state_loaded.profile_uacc is defined
+      - racf_state_loaded.users | type_debug == 'dict'
+      - racf_state_loaded.racf_groups | type_debug == 'list'
+      - racf_state_loaded.dataset_profiles | type_debug == 'list'
+
+- name: Validate RACF groups have unique names and GIDs
+  vars:
+    group_names: "{{ racf_state_loaded.racf_groups | map(attribute='identity.name') | list }}"
+    group_gids: "{{ racf_state_loaded.racf_groups | map(attribute='omvs.gid') | list }}"
+  ansible.builtin.assert:
+    that:
+      - group_names | length > 0
+      - group_names | unique | length == group_names | length
+      - group_gids | unique | length == group_gids | length
+
+- name: Materialize RACF variables from loaded state
+  ansible.builtin.set_fact:
+    users: "{{ racf_state_loaded.users }}"
+    racf_groups: "{{ racf_state_loaded.racf_groups }}"
+    dataset_profiles: "{{ racf_state_loaded.dataset_profiles }}"
+    profile_uacc: "{{ racf_state_loaded.profile_uacc }}"
