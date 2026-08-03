@@ -189,10 +189,8 @@ jobs:
             cat racf_metrics.prom >> metrics.prom
           fi
 
-          # Append provisioning metrics when the provisioning playbook creates them
-          if [ -f provision_metrics.prom ]; then
-            cat provision_metrics.prom >> metrics.prom
-          fi
+          # Provisioning state is pushed separately using a stable grouping key
+          # so the newest run replaces the previous state.
 
           # Append CICS metrics when the report playbook creates them
           if [ -f cics_metrics.prom ]; then
@@ -225,6 +223,20 @@ jobs:
               "${PUSHGATEWAY_URL}/metrics/job/github_ansible/playbook/${PLAYBOOK_NAME}/repo/${REPO_SLUG}/build/${BUILD_NUMBER}"
           else
             echo "PUSHGATEWAY_URL is not set; skipping metrics push."
+          fi
+
+          # Push the latest provisioning state to a stable grouping key.
+          # PUT replaces the previous provisioning metrics instead of accumulating runs.
+          if [ -f provision_metrics.prom ] && [ -n "${PUSHGATEWAY_URL}" ]; then
+            echo "Publishing latest provisioning state..."
+
+            curl --fail --show-error --silent \
+              --request PUT \
+              --data-binary @provision_metrics.prom \
+              "${PUSHGATEWAY_URL}/metrics/job/provisioning_latest/repo/${REPO_SLUG}"
+
+            echo
+            echo "Latest provisioning state published."
           fi
 
           exit $RESULT
