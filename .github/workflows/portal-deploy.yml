@@ -187,6 +187,8 @@ jobs:
             "${PORTAL_EC2_USER}@${PORTAL_EC2_HOST}" \
             "cd ~/team03-portal &&
              chmod 600 .env &&
+             (docker network inspect team03-portal >/dev/null 2>&1 ||
+              docker network create team03-portal) &&
              docker compose --env-file .env pull &&
              docker compose --env-file .env up -d --remove-orphans"
 

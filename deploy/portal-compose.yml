@@ -37,3 +37,4 @@ services:
 networks:
   portal:
     name: team03-portal
+    external: true
