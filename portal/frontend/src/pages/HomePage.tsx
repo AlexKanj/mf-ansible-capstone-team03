@@ -211,6 +211,9 @@ export function HomePage() {
     import.meta.env.VITE_GITHUB_ACTIONS_URL ??
     "https://github.com/AlexKanj/mf-ansible-capstone-team03/actions";
 
+  const architectureDiagramUrl =
+    "/Team3%20Capstone.jpg";
+
   return (
     <main className="home-page">
       <section className="home-hero">
@@ -366,6 +369,18 @@ export function HomePage() {
             observability.
           </p>
         </div>
+
+        <figure className="home-architecture-figure">
+          <img
+            src={architectureDiagramUrl}
+            alt="Architecture diagram showing the Terraform, Ansible, GitHub Actions, monitoring, admin portal, and z/OS components for the project"
+            loading="lazy"
+          />
+          <figcaption>
+            Team 03 capstone architecture across AWS, the
+            monitoring stack, the admin portal, and z/OS.
+          </figcaption>
+        </figure>
 
         <div className="home-flow" aria-label="Architecture flow">
           {[
