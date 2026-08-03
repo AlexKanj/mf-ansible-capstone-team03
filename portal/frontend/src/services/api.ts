@@ -1,4 +1,5 @@
 import type {
+  AutomationRunOptionsResponse,
   AutomationRunDispatchResponse,
   AutomationRunStatusResponse,
   BatchOperationsResponse,
@@ -88,6 +89,31 @@ export async function getAutomationRunStatus(
   }
 
   return response.json() as Promise<AutomationRunStatusResponse>;
+}
+
+export async function getAutomationRunOptions(
+  signal?: AbortSignal,
+): Promise<AutomationRunOptionsResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/automation-run/options`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal,
+    },
+  );
+
+  if (!response.ok) {
+    const message =
+      "Automation options request failed with HTTP " +
+      `${response.status}`;
+
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<AutomationRunOptionsResponse>;
 }
 
 export async function getBatchOperations(

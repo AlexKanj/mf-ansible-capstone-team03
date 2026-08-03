@@ -230,6 +230,34 @@
   line-height: 1.65;
 }
 
+.home-architecture-figure {
+  margin: 0 0 20px;
+  padding: 16px;
+  border: 1px solid #27344c;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20, 30, 48, 0.96),
+      rgba(11, 18, 32, 0.96)
+    );
+}
+
+.home-architecture-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.home-architecture-figure figcaption {
+  margin-top: 12px;
+  color: #8796aa;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 .home-story-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -691,6 +719,10 @@
   .home-story-grid,
   .home-team-grid {
     grid-template-columns: 1fr;
+  }
+
+  .home-architecture-figure {
+    padding: 12px;
   }
 
   .home-repo-grid,

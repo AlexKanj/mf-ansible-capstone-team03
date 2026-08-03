@@ -200,3 +200,21 @@ Labels: `job_id`, `job_name`, `student`, `jcl`.
 Labels: `host`.
 
 See `Grafana-Example-Queries.md` for ready-to-use PromQL queries and recommended dashboard layouts.
+
+## Admin Portal
+The admin portal run to allow users to submit ansible playbooks without having to go through github actions.
+
+### Testing:
+To start frontend locally, simply run `npm run dev`
+For the backend:
+Create a .env file (`portal/api/.env.local`) and populate it with the appropriate variables. Then simply run `./start_backend.sh`
+
+Alternitevly, manually set the backend up with:
+1. Start the virtual environment with `source .venv/bin/activate`
+2. Set the environment variables:
+```
+PROMETHEUS_URL=...
+GITHUB_REPO=...
+GITHUB_TOKEN=...
+```
+3. Run `uvicorn main:app --host 0.0.0.0 --port 8000 --reload`
