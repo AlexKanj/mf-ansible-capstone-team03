@@ -23,21 +23,11 @@ const INITIAL_FORM: RunAutomationPayload = {
 const MANUAL_JCL_PLAYBOOK = "run_manual_jcl.yml";
 
 const PLAYBOOK_OPTIONS = [
-  "create_qsam_multiple.yml",
-  "create_qsam_using_local_jcl.yml",
-  "create_qsam_via_tso.yml",
-  "create_qsam.yml",
-  "define_ksds.yml",
-  "gather_facts_including_zinfo.yml",
-  "gather_facts.yml",
   "gather_mf_metrics.yml",
   "hello_world.yml",
   "run_jcl_nonfatal.yml",
   "run_jcl.yml",
-  "run_job_and_copy_selected_dataset_yml",
-  "run_job_and_list_selected_dataset.yml",
   "run_manual_jcl.yml",
-  "run_sort_1.yml",
 ] as const;
 
 const JCL_OPTIONS = [
