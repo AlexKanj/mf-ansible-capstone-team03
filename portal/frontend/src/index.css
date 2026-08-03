@@ -382,8 +382,13 @@ h1 {
   gap: 18px;
 }
 
+.automation-grid > * {
+  min-width: 0;
+}
+
 .automation-form,
 .automation-panel {
+  min-width: 0;
   padding: 20px;
   border: 1px solid #263249;
   border-radius: 14px;
@@ -420,6 +425,7 @@ h1 {
 
 .automation-form input,
 .automation-form select,
+.automation-form textarea,
 .automation-status-check input {
   min-height: 42px;
   padding: 0 12px;
@@ -427,6 +433,12 @@ h1 {
   border-radius: 10px;
   color: #f5f7fb;
   background: #111a2a;
+}
+
+.automation-form textarea {
+  min-height: 180px;
+  padding: 10px 12px;
+  resize: vertical;
 }
 
 .automation-form button,
@@ -494,6 +506,86 @@ h1 {
   margin: 10px 0 0;
   color: #ff9da6;
   font-size: 0.83rem;
+}
+
+.automation-loading-bar {
+  position: relative;
+  height: 4px;
+  margin: 2px 0 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(64, 81, 115, 0.45);
+}
+
+.automation-loading-bar::after {
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: inherit;
+  content: "";
+  background: linear-gradient(
+    90deg,
+    rgba(104, 131, 237, 0),
+    #6883ed,
+    rgba(104, 131, 237, 0)
+  );
+  animation: automation-loading-bar 1.15s ease-in-out infinite;
+}
+
+@keyframes automation-loading-bar {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.automation-option-details {
+  margin-top: 6px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #30415d;
+  border-radius: 10px;
+  background: rgba(15, 24, 40, 0.75);
+}
+
+.automation-option-title {
+  margin: 0;
+  color: #d5def0;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.automation-option-description {
+  margin: 8px 0 0;
+  color: #bdcbe2;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.automation-option-path {
+  margin: 7px 0 0;
+  color: #89a2cc;
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.automation-option-preview {
+  margin: 8px 0 0;
+  max-width: 100%;
+  max-height: 170px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid #3b4f72;
+  border-radius: 8px;
+  color: #d9e4f8;
+  font-size: 0.75rem;
+  line-height: 1.32;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #0a1220;
 }
 
 /* Batch operations */

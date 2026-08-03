@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
 import {
+  getAutomationRunOptions,
   getAutomationRunStatus,
   submitAutomationRun,
 } from "../services/api";
 import type {
+  AutomationOption,
   AutomationRunDispatchResponse,
+  AutomationRunOptionsResponse,
   AutomationRunStatusResponse,
   RunAutomationPayload,
 } from "../types/api";
@@ -21,34 +24,10 @@ const INITIAL_FORM: RunAutomationPayload = {
 };
 
 const MANUAL_JCL_PLAYBOOK = "run_manual_jcl.yml";
-
-const PLAYBOOK_OPTIONS = [
-  "create_qsam_multiple.yml",
-  "create_qsam_using_local_jcl.yml",
-  "create_qsam_via_tso.yml",
-  "create_qsam.yml",
-  "define_ksds.yml",
-  "gather_facts_including_zinfo.yml",
-  "gather_facts.yml",
-  "gather_mf_metrics.yml",
-  "hello_world.yml",
-  "run_jcl_nonfatal.yml",
+const JCL_FILE_PLAYBOOKS = new Set([
   "run_jcl.yml",
-  "run_job_and_copy_selected_dataset_yml",
-  "run_job_and_list_selected_dataset.yml",
-  "run_manual_jcl.yml",
-  "run_sort_1.yml",
-] as const;
-
-const JCL_OPTIONS = [
-  "create_customer_file.jcl",
-  "delete_customer_file.jcl",
-  "hello_world_fail.jcl",
-  "hello_world.jcl",
-  "list_datasets.jcl",
-  "report_customers.jcl",
-  "sort_customers.jcl",
-] as const;
+  "run_jcl_nonfatal.yml",
+]);
 
 function formatDate(value: string | null): string {
   if (!value) {
@@ -85,16 +64,80 @@ export function AutomationRunPage() {
   const [statusError, setStatusError] =
     useState<string | null>(null);
 
+  const [optionsData, setOptionsData] =
+    useState<AutomationRunOptionsResponse | null>(null);
+
+  const [optionsLoading, setOptionsLoading] =
+    useState(false);
+
+  const [optionsError, setOptionsError] =
+    useState<string | null>(null);
+
+  const playbookOptions = optionsData?.playbooks ?? [];
+  const jclOptions = optionsData?.jcl_files ?? [];
+
+  const selectedPlaybookOption = playbookOptions.find(
+    (option) => option.value === formData.playbook,
+  );
+
+  const selectedJclOption = jclOptions.find(
+    (option) => option.value === formData.jcl_file,
+  );
+
+  const selectedPlaybook = formData.playbook.trim();
   const isManualJclPlaybook =
-    formData.playbook.trim() === MANUAL_JCL_PLAYBOOK;
+    selectedPlaybook === MANUAL_JCL_PLAYBOOK;
+  const usesJclFile = JCL_FILE_PLAYBOOKS.has(selectedPlaybook);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadOptions() {
+      setOptionsLoading(true);
+      setOptionsError(null);
+
+      try {
+        const result = await getAutomationRunOptions(
+          controller.signal,
+        );
+        setOptionsData(result);
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to load automation options";
+
+        setOptionsError(message);
+      } finally {
+        if (!controller.signal.aborted) {
+          setOptionsLoading(false);
+        }
+      }
+    }
+
+    void loadOptions();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const selectedPlaybook = formData.playbook.trim();
-
     if (!selectedPlaybook) {
       setSubmitError("Playbook name is required");
+      return;
+    }
+
+    if (!playbookOptions.length) {
+      setSubmitError(
+        "No playbook options are available right now",
+      );
       return;
     }
 
@@ -103,19 +146,20 @@ export function AutomationRunPage() {
       return;
     }
 
+    if (usesJclFile && !formData.jcl_file.trim()) {
+      setSubmitError("Select a JCL file for this playbook");
+      return;
+    }
+
     setSubmitLoading(true);
     setSubmitError(null);
     setRunStatus(null);
 
     try {
-      const submitPayload: RunAutomationPayload & {
-        jcl_text?: string;
-      } = {
+      const submitPayload: RunAutomationPayload = {
         ...formData,
         playbook: selectedPlaybook,
-        jcl_file: isManualJclPlaybook
-          ? ""
-          : formData.jcl_file.trim(),
+        jcl_file: usesJclFile ? formData.jcl_file.trim() : "",
         student_id: formData.student_id.trim(),
       };
 
@@ -123,9 +167,7 @@ export function AutomationRunPage() {
         submitPayload.jcl_text = manualJclText.trim();
       }
 
-      const result = await submitAutomationRun(
-        submitPayload as RunAutomationPayload,
-      );
+      const result = await submitAutomationRun(submitPayload);
 
       setDispatchResult(result);
 
@@ -187,26 +229,49 @@ export function AutomationRunPage() {
         <form className="automation-form" onSubmit={onSubmit}>
           <h2>Submit Automation Run</h2>
 
+          {optionsError && (
+            <p className="automation-error">{optionsError}</p>
+          )}
+
+          {optionsLoading && (
+            <div
+              className="automation-loading-bar"
+              aria-label="Loading automation options"
+              aria-valuetext="Loading automation options"
+              role="progressbar"
+            />
+          )}
+
           <label htmlFor="playbook">Playbook</label>
           <select
             id="playbook"
             value={formData.playbook}
+            disabled={optionsLoading || !playbookOptions.length}
             onChange={(event) => {
               setFormData((previous) => ({
                 ...previous,
                 playbook: event.target.value,
+                jcl_file: "",
               }));
+              setManualJclText("");
               setSubmitError(null);
             }}
             required
           >
             <option value="">Select a playbook</option>
-            {PLAYBOOK_OPTIONS.map((playbook) => (
-              <option key={playbook} value={playbook}>
-                {playbook}
+            {playbookOptions.map((playbook) => (
+              <option key={playbook.value} value={playbook.value}>
+                {playbook.value}
               </option>
             ))}
           </select>
+
+          {selectedPlaybookOption && (
+            <OptionDetails
+              title="Playbook context"
+              option={selectedPlaybookOption}
+            />
+          )}
 
           {isManualJclPlaybook ? (
             <>
@@ -224,12 +289,13 @@ export function AutomationRunPage() {
                 required
               />
             </>
-          ) : (
+          ) : usesJclFile ? (
             <>
               <label htmlFor="jcl-file">JCL file</label>
               <select
                 id="jcl-file"
                 value={formData.jcl_file}
+                disabled={optionsLoading || !jclOptions.length}
                 onChange={(event) => {
                   setFormData((previous) => ({
                     ...previous,
@@ -238,14 +304,21 @@ export function AutomationRunPage() {
                 }}
               >
                 <option value="">Select a JCL file</option>
-                {JCL_OPTIONS.map((jclFile) => (
-                  <option key={jclFile} value={jclFile}>
-                    {jclFile}
+                {jclOptions.map((jclFile) => (
+                  <option key={jclFile.value} value={jclFile.value}>
+                    {jclFile.value}
                   </option>
                 ))}
               </select>
+
+              {selectedJclOption && (
+                <OptionDetails
+                  title="JCL context"
+                  option={selectedJclOption}
+                />
+              )}
             </>
-          )}
+          ) : null}
 
           <label htmlFor="student-id">Student ID</label>
           <input
@@ -410,5 +483,28 @@ export function AutomationRunPage() {
         </section>
       </section>
     </main>
+  );
+}
+
+function OptionDetails({
+  title,
+  option,
+}: {
+  title: string;
+  option: AutomationOption;
+}) {
+  return (
+    <div className="automation-option-details">
+      <p className="automation-option-title">{title}</p>
+      <p className="automation-option-description">
+        {option.description}
+      </p>
+      <p className="automation-option-path">{option.path}</p>
+      {option.code_preview && (
+        <pre className="automation-option-preview">
+          {option.code_preview}
+        </pre>
+      )}
+    </div>
   );
 }

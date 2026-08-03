@@ -1,4 +1,7 @@
 ---
+# This file is used by racf_rebuild to create and configure the groups and users defined below
+
+# this defines what users will be created and what group they should be apart of
 users:
   D03GPT:
     - U03D01
@@ -8,6 +11,7 @@ users:
   P03PTG:
     - P03PTU
 
+# this defines the RACF groups that will be created 
 racf_groups:
   - identity:
       name: D03GRP
@@ -79,6 +83,7 @@ racf_groups:
     subgroups: []
     connected_users: []
 
+# This defines permissions each user will have
 dataset_profiles:
   - userid: U03D01
     access: ALTER
