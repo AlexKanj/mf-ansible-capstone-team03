@@ -54,6 +54,7 @@ Thumbs.db
 # Operations portal
 portal/api/.venv/
 portal/api/.env
+portal/api/.env.local
 __pycache__/
 *.pyc
 portal/frontend/.env

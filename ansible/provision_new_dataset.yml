@@ -1,5 +1,6 @@
 ---
-# Provision and seed DEV/TST source libraries for a z/OS user.
+# Provision and seed DEV/TST source libraries for a z/OS user in racf_vars
+# This playbook will populate a user's dataset with starter files found in the seed_files directory
 #
 # Usage:
 #   ansible-playbook provision_new_dataset.yml

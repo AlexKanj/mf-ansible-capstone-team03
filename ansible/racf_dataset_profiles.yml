@@ -1,4 +1,5 @@
 ---
+# This playbook creates RACF dataset profiles for users found in racf_vars
 - name: Manage RACF data set profiles
   hosts: zos
   gather_facts: false

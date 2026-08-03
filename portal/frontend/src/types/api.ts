@@ -62,6 +62,23 @@ export interface RunAutomationPayload {
   run_mf_metrics: BooleanString;
   rebuild_racf: BooleanString;
   rebuild_datasets: BooleanString;
+  jcl_text?: string;
+}
+
+export interface AutomationOption {
+  value: string;
+  name: string;
+  description: string;
+  path: string;
+  code_preview: string;
+  is_manual_jcl: boolean;
+}
+
+export interface AutomationRunOptionsResponse {
+  source: "local" | "github";
+  generated_at: string;
+  playbooks: AutomationOption[];
+  jcl_files: AutomationOption[];
 }
 
 export interface AutomationRunDispatchResponse {

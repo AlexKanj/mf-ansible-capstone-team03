@@ -1,4 +1,5 @@
 ---
+# This playbook creates the RACF groups and users defined in racf_vars
 - name: Experiment with RACF group commands
   hosts: zos
   gather_facts: false

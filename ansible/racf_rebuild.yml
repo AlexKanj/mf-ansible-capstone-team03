@@ -1,4 +1,10 @@
 ---
+# This playbook creates and configures new users which are defined in racf_vars
+# It uses racf_dataset_profiles.yml, racf_group_sandbox.yml, provision_new_dataset.yml, and racf_verify.yml
+# 1. Delete all previous RACF data set profiles to ensure itempotency (skip if rebuild_racf=false)
+# 2. Delete (skip if rebuild=false) and recreate RACF groups and users
+# 3. Add and configure RACF dataset profiles 
+# 4. Verify results
 # Safe default: without -e "rebuild_racf=true", this playbook only runs the
 # read-only verification playbook at the end.
 - name: Delete managed RACF data set profiles

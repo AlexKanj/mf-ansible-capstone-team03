@@ -1,4 +1,5 @@
 ---
+# This playbook pings the z/OS system to ensure valid connection
 - name: Ping z/OS 
   hosts: zos
   collections:
