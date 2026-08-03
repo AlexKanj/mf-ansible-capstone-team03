@@ -149,11 +149,18 @@ async def get_overview(
         "racf_users": "max(zos_racf_users_total)",
         "racf_groups": "max(zos_racf_groups_total)",
         "datasets_ready": (
-            f'sum(zos_user_dataset_ready{{userid="{userid}"}})'
+            f'sum(zos_user_dataset_ready{{'
+            f'job="provisioning_latest",'
+            f'repo="mf-ansible-capstone-team03",'
+            f'userid="{userid}"'
+            f'}})'
         ),
         "datasets_expected": (
-            f'max(zos_provision_datasets_expected'
-            f'{{userid="{userid}"}})'
+            f'max(zos_provision_datasets_expected{{'
+            f'job="provisioning_latest",'
+            f'repo="mf-ansible-capstone-team03",'
+            f'userid="{userid}"'
+            f'}})'
         ),
         "active_jobs": "max(zos_active_job_count)",
         "active_stcs": "max(zos_active_stc_count)",
