@@ -15,6 +15,7 @@ on:
           - hello_world.yml
           - provision_new_dataset.yml
           - racf_rebuild.yml
+          - racf_apply_change.yml
           - racf_group_sandbox.yml
           - racf_dataset_profiles.yml
           - report.yml
@@ -54,6 +55,10 @@ on:
         description: Inline JCL text (used by run_manual_jcl.yml)
         default: ""
         required: false
+      CHANGE_PAYLOAD:
+        description: JSON extra vars for racf_apply_change.yml
+        default: "{}"
+        required: false
 
 jobs:
   run-ansible-playbook:
@@ -84,6 +89,7 @@ jobs:
           REBUILD_RACF: ${{ inputs.REBUILD_RACF }}
           REBUILD_DATASETS: ${{ inputs.REBUILD_DATASETS }}
           JCL_TEXT: ${{ inputs.JCL_TEXT }}
+          CHANGE_PAYLOAD: ${{ inputs.CHANGE_PAYLOAD }}
           REPO_SLUG: ${{ github.event.repository.name }}
           BRANCH: ${{ github.ref_name }}
           BUILD_NUMBER: ${{ github.run_number }}
@@ -123,11 +129,17 @@ jobs:
 
           set +e
 
+          # CHANGE_PAYLOAD carries racf_apply_change.yml's vars as one JSON object.
+          if [ -z "${CHANGE_PAYLOAD}" ]; then
+            CHANGE_PAYLOAD="{}"
+          fi
+
           ansible-playbook \
             -u ibmuser \
             -i inventory.yml \
             --private-key .ssh/id_rsa \
             -e @extra_vars.yml \
+            -e "${CHANGE_PAYLOAD}" \
             ${PLAYBOOK_NAME}
 
           RESULT=$?
