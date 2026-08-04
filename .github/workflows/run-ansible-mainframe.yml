@@ -112,10 +112,14 @@ jobs:
           chmod 600 .ssh/id_rsa
           export ANSIBLE_HOST_KEY_CHECKING=False
 
-          if [[ "${PLAYBOOK_NAME}" != *.yml ]]; then
-            echo "PLAYBOOK_NAME must be a .yml file in the ansible directory."
-            exit 2
-          fi
+          case "${PLAYBOOK_NAME}" in
+            *.yml)
+              ;;
+            *)
+              echo "PLAYBOOK_NAME must be a .yml file in the ansible directory."
+              exit 2
+              ;;
+          esac
 
           if [ ! -f "${PLAYBOOK_NAME}" ]; then
             echo "PLAYBOOK_NAME '${PLAYBOOK_NAME}' was not found under ansible/."
@@ -222,27 +226,37 @@ jobs:
             cat db2_metrics.prom >> metrics.prom
           fi
 
-          # Optionally run the system metrics playbook
+          # Optionally collect a system snapshot after another playbook.
+          # Do not run it twice when gather_mf_metrics.yml is already selected.
           if [ "${RUN_MF_METRICS}" = "true" ] &&
-             [ "${PLAYBOOK_NAME}" != "report.yml" ]; then
+            [ "${PLAYBOOK_NAME}" != "report.yml" ] &&
+            [ "${PLAYBOOK_NAME}" != "gather_mf_metrics.yml" ]; then
+
+            echo "Collecting mainframe system metrics..."
+
             ansible-playbook \
               -u ibmuser \
               -i inventory.yml \
               --private-key .ssh/id_rsa \
               gather_mf_metrics.yml
-
-            if [ -f mf_metrics.prom ]; then
-              cat mf_metrics.prom >> metrics.prom
-            fi
           fi
 
           cat metrics.prom
 
-          if [ -n "${PUSHGATEWAY_URL}" ]; then
-            curl --data-binary @metrics.prom \
-              "${PUSHGATEWAY_URL}/metrics/job/github_ansible/playbook/${PLAYBOOK_NAME}/repo/${REPO_SLUG}/build/${BUILD_NUMBER}"
-          else
-            echo "PUSHGATEWAY_URL is not set; skipping metrics push."
+          # Publish the latest mainframe system snapshot.
+          # PUT replaces the previous snapshot instead of accumulating runs.
+          if [ -f mf_metrics.prom ] &&
+            [ -n "${PUSHGATEWAY_URL}" ]; then
+
+            echo "Publishing latest mainframe system snapshot..."
+
+            curl --fail --show-error --silent \
+              --request PUT \
+              --data-binary @mf_metrics.prom \
+              "${PUSHGATEWAY_URL}/metrics/job/mainframe_system_latest/repo/${REPO_SLUG}"
+
+            echo
+            echo "Latest mainframe system snapshot published."
           fi
 
           # Push the latest provisioning state to a stable grouping key.
