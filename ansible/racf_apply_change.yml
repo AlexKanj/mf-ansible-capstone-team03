@@ -1,0 +1,253 @@
+---
+# Apply a single targeted RACF change (one user or one group) instead of
+# rebuilding every managed user/group like racf_rebuild.yml does.
+#
+# Vars (passed as extra vars):
+#   change_action: add_user | remove_user | add_group | remove_group | update_membership
+#   change_userid, change_group, change_access
+#   change_group_owner, change_group_superior, change_group_gid
+#   change_previous_group (only for update_membership; "" if none)
+- name: Apply a single targeted RACF change
+  hosts: zos
+  gather_facts: false
+
+  collections:
+    - ibm.ibm_zos_core
+
+  environment: "{{ environment_vars }}"
+
+  pre_tasks:
+    - name: Load managed RACF configuration
+      ansible.builtin.include_tasks: tasks/load_racf_config.yml
+
+  vars:
+    change_access: "{{ change_access | default('ALTER') }}"
+    change_previous_group: "{{ change_previous_group | default('') }}"
+
+  tasks:
+    - name: Add a single user
+      when: change_action == 'add_user'
+      block:
+        - name: Create user with SYS1 as the default group
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - >-
+                ADDUSER {{ change_userid }}
+                DFLTGRP(SYS1)
+                NAME('{{ change_userid }}')
+                OWNER(IBMUSER)
+                PASSWORD({{ change_userid }})
+          register: adduser_result
+          failed_when: false
+
+        - name: Add TSO segment to user
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "ALTUSER {{ change_userid }} TSO(ACCTNUM(ACCT001) PROC(DB13PROC) SIZE(2096128) COMMAND(ISPF))"
+          register: altuser_tso_result
+          failed_when: false
+
+        - name: Add OMVS segment to user
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "ALTUSER {{ change_userid }} OMVS(AUTOUID HOME('/u/{{ change_userid | lower }}') PROGRAM('/bin/sh'))"
+          register: altuser_omvs_result
+          failed_when: false
+
+        - name: Connect user to its managed RACF group
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "CONNECT {{ change_userid }} GROUP({{ change_group }})"
+            max_rc: 8
+          register: connect_result
+          failed_when: false
+
+        - name: Create USS home directory
+          ansible.builtin.file:
+            path: "/u/{{ change_userid | lower }}"
+            state: directory
+            owner: "{{ change_userid }}"
+            group: "{{ change_group }}"
+            mode: "0750"
+          register: home_directory_result
+          failed_when: false
+
+        - name: Create generic RACF data set profile
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - >-
+                ADDSD '{{ change_userid }}.**'
+                OWNER({{ change_userid }})
+                UACC({{ profile_uacc }})
+          register: create_profile_result
+
+        - name: Grant user access to its data set profile
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - >-
+                PERMIT '{{ change_userid }}.**'
+                ID({{ change_userid }})
+                ACCESS({{ change_access }})
+                GENERIC
+          register: permit_result
+
+        - name: Refresh generic data set profiles
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "SETROPTS GENERIC(DATASET) REFRESH"
+
+        - name: Show add_user results
+          ansible.builtin.debug:
+            msg:
+              adduser: "{{ adduser_result.output | default([]) }}"
+              tso_segment: "{{ altuser_tso_result.output | default([]) }}"
+              omvs_segment: "{{ altuser_omvs_result.output | default([]) }}"
+              connect: "{{ connect_result.output | default([]) }}"
+              home_directory: "{{ home_directory_result.msg | default('') }}"
+              dataset_profile: "{{ create_profile_result.output | default([]) }}"
+              permit: "{{ permit_result.output | default([]) }}"
+
+    - name: Remove a single user
+      when: change_action == 'remove_user'
+      block:
+        - name: Delete the user's generic data set profile
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "DELDSD '{{ change_userid }}.**' GENERIC"
+            max_rc: 8
+          register: delete_profile_result
+          failed_when: false
+
+        - name: Refresh generic data set profiles after deletion
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "SETROPTS GENERIC(DATASET) REFRESH"
+
+        - name: Delete the user
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "DELUSER {{ change_userid }}"
+            max_rc: 8
+          register: deluser_result
+          failed_when: false
+
+        - name: Show remove_user results
+          ansible.builtin.debug:
+            msg:
+              delete_profile: "{{ delete_profile_result.output | default([]) }}"
+              deluser: "{{ deluser_result.output | default([]) }}"
+
+    - name: Add a single group
+      when: change_action == 'add_group'
+      block:
+        - name: Create RACF group
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - >-
+                ADDGROUP {{ change_group }}
+                OWNER({{ change_group_owner }})
+                SUPGROUP({{ change_group_superior }})
+            max_rc: 8
+          register: addgroup_result
+          failed_when: false
+
+        - name: Add OMVS segment to group
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "ALTGROUP {{ change_group }} OMVS(GID({{ change_group_gid }}))"
+            max_rc: 8
+          register: altgroup_result
+          failed_when: false
+
+        - name: Show add_group results
+          ansible.builtin.debug:
+            msg:
+              addgroup: "{{ addgroup_result.output | default([]) }}"
+              altgroup_omvs: "{{ altgroup_result.output | default([]) }}"
+
+    - name: Remove a single group
+      when: change_action == 'remove_group'
+      block:
+        - name: Delete RACF group
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "DELGROUP {{ change_group }}"
+            max_rc: 8
+          register: delgroup_result
+          failed_when: false
+
+        - name: Show remove_group results
+          ansible.builtin.debug:
+            msg:
+              delgroup: "{{ delgroup_result.output | default([]) }}"
+
+    - name: Update a single user's group membership
+      when: change_action == 'update_membership'
+      block:
+        - name: Remove user from its previous group
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "REMOVE {{ change_userid }} GROUP({{ change_previous_group }})"
+            max_rc: 8
+          register: remove_group_result
+          failed_when: false
+          when: change_previous_group | length > 0
+
+        - name: Connect user to its new group
+          ibm.ibm_zos_core.zos_tso_command:
+            commands:
+              - "CONNECT {{ change_userid }} GROUP({{ change_group }})"
+            max_rc: 8
+          register: connect_new_group_result
+          failed_when: false
+
+        - name: Show update_membership results
+          ansible.builtin.debug:
+            msg:
+              removed_from: "{{ remove_group_result.output | default([]) }}"
+              connected_to: "{{ connect_new_group_result.output | default([]) }}"
+
+    - name: Write RACF metrics
+      ansible.builtin.copy:
+        dest: racf_metrics.prom
+        mode: "0644"
+        content: |
+          # HELP zos_racf_users_total Number of managed RACF users
+          # TYPE zos_racf_users_total gauge
+          zos_racf_users_total {{ users | dict2items | map(attribute='value') | flatten | unique | length }}
+
+          # HELP zos_racf_groups_total Number of managed RACF groups
+          # TYPE zos_racf_groups_total gauge
+          zos_racf_groups_total {{ racf_groups | length }}
+
+          # HELP zos_racf_user_present Whether a RACF user is present in its assigned group
+          # TYPE zos_racf_user_present gauge
+          {% for group_name, group_users in users.items() %}
+          {% for userid in group_users %}
+          zos_racf_user_present{userid="{{ userid }}",group="{{ group_name }}"} 1
+          {% endfor %}
+          {% endfor %}
+
+          # HELP zos_racf_group_present Whether a managed RACF group is present
+          # TYPE zos_racf_group_present gauge
+          {% for group in racf_groups %}
+          zos_racf_group_present{group="{{ group.identity.name }}",owner="{{ group.hierarchy.owner }}",superior_group="{{ group.hierarchy.superior_group }}",gid="{{ group.omvs.gid }}"} 1
+          {% endfor %}
+
+          # HELP zos_racf_dataset_access Desired dataset access assigned to a RACF user
+          # TYPE zos_racf_dataset_access gauge
+          {% for profile in dataset_profiles %}
+          zos_racf_dataset_access{userid="{{ profile.userid }}",access="{{ profile.access }}"} 1
+          {% endfor %}
+
+          # HELP zos_racf_profile_uacc RACF dataset profile universal access setting
+          # TYPE zos_racf_profile_uacc gauge
+          zos_racf_profile_uacc{uacc="{{ profile_uacc }}"} 1
+      delegate_to: localhost
+      run_once: true
+
+- name: Provision datasets for the newly added user
+  import_playbook: provision_new_dataset.yml
+  when: change_action == 'add_user'
+  vars:
+    userid: "{{ change_userid }}"
