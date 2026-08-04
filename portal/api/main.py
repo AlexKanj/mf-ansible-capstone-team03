@@ -157,9 +157,24 @@ async def get_overview(
             f'userid="{userid}"'
             f'}})'
         ),
-        "active_jobs": "max(zos_active_job_count)",
-        "active_stcs": "max(zos_active_stc_count)",
-        "active_batch_jobs": "max(zos_active_batch_job_count)",
+        "active_jobs": (
+            'max(zos_active_job_count{'
+            'job="mainframe_system_latest",'
+            'repo="mf-ansible-capstone-team03"'
+            '})'
+        ),
+        "active_stcs": (
+            'max(zos_active_stc_count{'
+            'job="mainframe_system_latest",'
+            'repo="mf-ansible-capstone-team03"'
+            '})'
+        ),
+        "active_batch_jobs": (
+            'max(zos_active_batch_job_count{'
+            'job="mainframe_system_latest",'
+            'repo="mf-ansible-capstone-team03"'
+            '})'
+        ),
         "last_run_timestamp": (
             "max("
             "github_ansible_playbook_last_run_timestamp_seconds"
