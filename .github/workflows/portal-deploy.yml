@@ -155,6 +155,7 @@ jobs:
           GITHUB_REPO: ${{ github.repository }}
           PORTAL_EC2_HOST: ${{ vars.PORTAL_EC2_HOST }}
           PORTAL_EC2_USER: ${{ vars.PORTAL_EC2_USER }}
+          RACF_STATE_BUCKET: ${{ vars.RACF_STATE_BUCKET }}
         run: |
           {
             printf 'PORTAL_API_IMAGE=%s/portal-api\n' "${IMAGE_PREFIX}"
@@ -163,6 +164,7 @@ jobs:
             printf 'PROMETHEUS_URL=%s\n' "${PROMETHEUS_URL}"
             printf 'GITHUB_REPO=%s\n' "${GITHUB_REPO}"
             printf 'GITHUB_TOKEN=%s\n' "${PORTAL_GITHUB_TOKEN}"
+            printf 'RACF_STATE_BUCKET=%s\n' "${RACF_STATE_BUCKET}"
           } > /tmp/team03-portal.env
 
           chmod 600 /tmp/team03-portal.env
