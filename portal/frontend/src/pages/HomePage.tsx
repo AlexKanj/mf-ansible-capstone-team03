@@ -87,7 +87,6 @@ const BUILD_AREAS = [
       "Prometheus",
       "Pushgateway",
       "Grafana",
-      "Loki and Promtail",
       "Custom automation metrics",
     ],
   },
@@ -101,42 +100,7 @@ const BUILD_AREAS = [
       "Live Prometheus queries",
       "Automation workflow controls",
       "JCL and batch reporting",
-    ],
-  },
-];
-
-const TEAM_MEMBERS = [
-  {
-    initials: "AK",
-    name: "Alex",
-    role: "Cross-Platform Integration",
-    responsibilities: [
-      "AWS portal deployment",
-      "Overall Status experience",
-      "Mainframe automation support",
-      "Platform integration",
-    ],
-  },
-  {
-    initials: "M",
-    name: "Miles",
-    role: "Automation & Pipeline Visibility",
-    responsibilities: [
-      "Automation Runs experience",
-      "Workflow reporting",
-      "Pipeline integration",
-      "Execution visibility",
-    ],
-  },
-  {
-    initials: "R",
-    name: "Ray",
-    role: "JCL & Batch Operations",
-    responsibilities: [
-      "JCL and JES reporting",
-      "Batch Operations experience",
-      "Workload visibility",
-      "Operational validation",
+      "RACF Management",
     ],
   },
 ];
@@ -144,33 +108,33 @@ const TEAM_MEMBERS = [
 const DEMO_STEPS = [
   {
     number: "01",
-    title: "Commit",
+    title: "Trigger workflows through GitHub",
     description:
-      "A developer pushes a version-controlled infrastructure, portal, or mainframe change.",
+      "We will start by showing an example of a simple Ansible playbook that will do something magical (say hi) in z/OS. We will also show off a playbook that can submit JCL to z/OS",
   },
   {
     number: "02",
-    title: "Automate",
+    title: "See resutls in Grafana",
     description:
-      "GitHub Actions executes the appropriate Terraform or Ansible workflow.",
+      "After we have shown a few playbooks, we will then demonstrate how we can view that status of z/OS through a Grafana dashboard",
   },
   {
     number: "03",
-    title: "Operate",
+    title: "Show Admin portal",
     description:
-      "Linux services are configured while z/OS resources or workloads are processed.",
+      "Next, we will view the admin portal in more detail. We will see how a user could submit z/OS playbooks, run JCL, view the status of z/OS and even create new users and groups",
   },
   {
     number: "04",
-    title: "Observe",
+    title: "Failure",
     description:
-      "Prometheus, Grafana, and the portal surface execution results and platform health.",
+      "Things don't go right all the time. After we have shown how a user could submit JCL, we will next show off how our system handles a failure.",
   },
   {
     number: "05",
-    title: "Recover",
+    title: "Create a user",
     description:
-      "A deliberate failure is corrected through code and rerun to a successful state.",
+      "Finally, we will show how a user could manage RACF groups and z/OS users through our portal",
   },
 ];
 
@@ -318,9 +282,8 @@ export function HomePage() {
           </div>
 
           <p>
-            The project brings Linux and the mainframe into
-            the same declarative, observable, and auditable
-            operating model.
+            This project combines Linux and z/OS platforms into 
+            a singular platform
           </p>
         </div>
 
@@ -331,10 +294,10 @@ export function HomePage() {
             </span>
             <h3>Disconnected operating models</h3>
             <p>
-              Linux infrastructure and z/OS operations were
-              managed through separate tools and manual
-              procedures, limiting consistency and
-              visibility.
+              In this project's hypothetical starting point, Linux and
+              z/OS were being managed seperately. This 
+              limited consistency and visibility. It also created a lot of 
+              manual and time-cosuming work.
             </p>
           </article>
 
@@ -358,7 +321,7 @@ export function HomePage() {
             <p>
               Infrastructure changes, security operations,
               JCL execution, and health reporting are now
-              driven from version-controlled code.
+              driven from version-controlled Infrastructure as code.
             </p>
           </article>
         </div>
@@ -427,9 +390,12 @@ export function HomePage() {
           </div>
 
           <p>
-            Application and mainframe automation are
-            separated from cloud infrastructure and Linux
-            monitoring deployment.
+            The mf-ansible-capstone-team03 directory contains the ansible playbooks
+            for monitoring and configuring the z/OS platform. These playbooks are store 
+            in the ansible/ directory. The .github/workflows/run-ansible-mainframe.yml is
+            responsible for running the ansible playbooks. This repo also contains the code 
+            and Docker containers for the frontend admin app. This app uses the ansible playbooks
+            and github acitons to first off commands to z/OS without needing the GitHub Actions UI.
           </p>
         </div>
 
@@ -478,8 +444,11 @@ portal/
 
             <h3>terraform-grafana-stack-captsone-team03</h3>
             <p>
-              AWS infrastructure, Linux configuration,
-              monitoring services, and portal deployment.
+              This repo conatins Terraform which provisions
+              AWS with the resources that will be needed for Grafana and Prometheus
+              It allows Ansible to discover the hosts created by Terraform using AWS EC2
+              dynamic inventory. Once Ansible knows what it needs to configure, it sets up
+              the required infrastructure and containers for Grafana and Prometheus.
             </p>
 
             <pre>
@@ -542,49 +511,8 @@ ansible/
       <section className="home-section">
         <div className="home-section__heading">
           <div>
-            <p className="home-eyebrow">Team 03</p>
-            <h2>Shared ownership across the platform</h2>
-          </div>
-
-          <p>
-            Each team member owns a presentation area while
-            contributing to the integrated solution.
-          </p>
-        </div>
-
-        <div className="home-team-grid">
-          {TEAM_MEMBERS.map((member) => (
-            <article className="home-team-card" key={member.name}>
-              <div className="home-team-card__avatar">
-                {member.initials}
-              </div>
-
-              <div>
-                <h3>{member.name}</h3>
-                <p className="home-team-card__role">
-                  {member.role}
-                </p>
-
-                <ul>
-                  {member.responsibilities.map(
-                    (responsibility) => (
-                      <li key={responsibility}>
-                        {responsibility}
-                      </li>
-                    ),
-                  )}
-                </ul>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="home-section">
-        <div className="home-section__heading">
-          <div>
             <p className="home-eyebrow">Demo journey</p>
-            <h2>What the audience will see next</h2>
+            <h2>What we will see next</h2>
           </div>
 
           <p>
