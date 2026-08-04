@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -64,7 +65,50 @@ def _dispatch_payload_for_rebuild() -> dict[str, Any]:
     }
 
 
-async def dispatch_racf_rebuild() -> dict[str, Any]:
+def _dispatch_payload_for_change(
+    action: str,
+    *,
+    userid: str = "",
+    group: str = "",
+    access: str = "",
+    group_owner: str = "",
+    group_superior: str = "",
+    group_gid: int | None = None,
+    previous_group: str = "",
+) -> dict[str, Any]:
+    change_vars: dict[str, Any] = {"change_action": action}
+
+    if userid:
+        change_vars["change_userid"] = userid
+    if group:
+        change_vars["change_group"] = group
+    if access:
+        change_vars["change_access"] = access
+    if group_owner:
+        change_vars["change_group_owner"] = group_owner
+    if group_superior:
+        change_vars["change_group_superior"] = group_superior
+    if group_gid is not None:
+        change_vars["change_group_gid"] = group_gid
+    if previous_group:
+        change_vars["change_previous_group"] = previous_group
+
+    return {
+        "ref": DEFAULT_BRANCH,
+        "inputs": {
+            "PLAYBOOK_NAME": "racf_apply_change.yml",
+            "JCL_FILE": "",
+            "JCL_TEXT": "",
+            "STUDENT_ID": "",
+            "RUN_MF_METRICS": "false",
+            "REBUILD_RACF": "false",
+            "REBUILD_DATASETS": "false",
+            "CHANGE_PAYLOAD": json.dumps(change_vars),
+        },
+    }
+
+
+async def _dispatch_workflow(payload: dict[str, Any]) -> dict[str, Any]:
     require_github_config()
 
     dispatch_url = (
@@ -99,11 +143,11 @@ async def dispatch_racf_rebuild() -> dict[str, Any]:
         dispatch_response = await client.post(
             dispatch_url,
             headers=github_headers(),
-            json=_dispatch_payload_for_rebuild(),
+            json=payload,
         )
 
         if dispatch_response.status_code >= 400:
-            raise HTTPException(status_code=502, detail="Failed to dispatch RACF rebuild workflow")
+            raise HTTPException(status_code=502, detail="Failed to dispatch RACF workflow")
 
         selected_run = None
         for _ in range(8):
@@ -150,6 +194,14 @@ async def dispatch_racf_rebuild() -> dict[str, Any]:
     }
 
 
+async def dispatch_racf_rebuild() -> dict[str, Any]:
+    return await _dispatch_workflow(_dispatch_payload_for_rebuild())
+
+
+async def dispatch_racf_change(action: str, **fields: Any) -> dict[str, Any]:
+    return await _dispatch_workflow(_dispatch_payload_for_change(action, **fields))
+
+
 def _state_response(state: dict[str, Any], etag: str | None, version_id: str | None) -> dict[str, Any]:
     return {
         "etag": etag,
@@ -182,11 +234,12 @@ async def add_managed_user(
         group_users.sort()
 
     dataset_profiles = state.setdefault("dataset_profiles", [])
+    access = payload.access.strip().upper() or "ALTER"
     if not any(profile.get("userid") == userid for profile in dataset_profiles):
-        dataset_profiles.append({"userid": userid, "access": payload.access.strip().upper() or "ALTER"})
+        dataset_profiles.append({"userid": userid, "access": access})
 
     etag, version_id = write_state(state, updated_by="portal:add_user", expected_etag=if_match)
-    dispatch = await dispatch_racf_rebuild()
+    dispatch = await dispatch_racf_change("add_user", userid=userid, group=group_name, access=access)
     return {
         **_state_response(state, etag, version_id),
         "rebuild": dispatch,
@@ -212,7 +265,7 @@ async def remove_managed_user(
     ]
 
     etag, version_id = write_state(state, updated_by="portal:remove_user", expected_etag=if_match)
-    dispatch = await dispatch_racf_rebuild()
+    dispatch = await dispatch_racf_change("remove_user", userid=normalized_userid)
     return {
         **_state_response(state, etag, version_id),
         "rebuild": dispatch,
@@ -249,7 +302,13 @@ async def add_managed_group(
     state.setdefault("users", {}).setdefault(group_name, [])
 
     etag, version_id = write_state(state, updated_by="portal:add_group", expected_etag=if_match)
-    dispatch = await dispatch_racf_rebuild()
+    dispatch = await dispatch_racf_change(
+        "add_group",
+        group=group_name,
+        group_owner=payload.owner.strip().upper() or "IBMUSER",
+        group_superior=payload.superior_group.strip().upper() or "SYS1",
+        group_gid=payload.gid,
+    )
     return {
         **_state_response(state, etag, version_id),
         "rebuild": dispatch,
@@ -281,7 +340,7 @@ async def remove_managed_group(
     users.pop(target_group, None)
 
     etag, version_id = write_state(state, updated_by="portal:remove_group", expected_etag=if_match)
-    dispatch = await dispatch_racf_rebuild()
+    dispatch = await dispatch_racf_change("remove_group", group=target_group)
     return {
         **_state_response(state, etag, version_id),
         "rebuild": dispatch,
@@ -299,6 +358,14 @@ async def update_user_membership(
     ensure_group_exists(state, target_group)
 
     users = state.setdefault("users", {})
+    previous_group = next(
+        (
+            group_name
+            for group_name, group_users in users.items()
+            if isinstance(group_users, list) and userid in group_users and group_name != target_group
+        ),
+        "",
+    )
     for group_name, group_users in users.items():
         if not isinstance(group_users, list):
             continue
@@ -308,7 +375,9 @@ async def update_user_membership(
     users[target_group] = sorted(set(users[target_group]))
 
     etag, version_id = write_state(state, updated_by="portal:update_membership", expected_etag=if_match)
-    dispatch = await dispatch_racf_rebuild()
+    dispatch = await dispatch_racf_change(
+        "update_membership", userid=userid, group=target_group, previous_group=previous_group
+    )
     return {
         **_state_response(state, etag, version_id),
         "rebuild": dispatch,
