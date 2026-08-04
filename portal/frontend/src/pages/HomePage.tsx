@@ -205,10 +205,11 @@ export function HomePage() {
   }, []);
 
   const grafanaUrl =
-    import.meta.env.VITE_GRAFANA_URL ?? "#";
+    import.meta.env.VITE_GRAFANA_URL?.trim() ||
+    `${window.location.protocol}//${window.location.hostname}:3000`;
 
   const githubActionsUrl =
-    import.meta.env.VITE_GITHUB_ACTIONS_URL ??
+    import.meta.env.VITE_GITHUB_ACTIONS_URL?.trim() ||
     "https://github.com/AlexKanj/mf-ansible-capstone-team03/actions";
 
   const architectureDiagramUrl =
