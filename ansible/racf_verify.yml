@@ -120,6 +120,33 @@
       loop_control:
         label: "{{ item.item.0 }}.{{ item.item.1 }}"
 
+    - name: Write verified RACF metrics
+      ansible.builtin.copy:
+        dest: racf_metrics.prom
+        mode: "0644"
+        content: |
+          # HELP zos_racf_users_total Number of verified managed RACF users
+          # TYPE zos_racf_users_total gauge
+          zos_racf_users_total {{ managed_users | length }}
+
+          # HELP zos_racf_groups_total Number of verified managed RACF groups
+          # TYPE zos_racf_groups_total gauge
+          zos_racf_groups_total {{ racf_groups | length }}
+
+          # HELP zos_racf_user_present Whether a managed RACF user was verified
+          # TYPE zos_racf_user_present gauge
+          {% for result in user_checks.results %}
+          zos_racf_user_present{userid="{{ result.item }}"} {{ 1 if (result.output | default([]) | length > 0 and result.output[0].rc | default(16) | int == 0) else 0 }}
+          {% endfor %}
+
+          # HELP zos_racf_group_present Whether a managed RACF group was verified
+          # TYPE zos_racf_group_present gauge
+          {% for result in group_checks.results %}
+          zos_racf_group_present{group="{{ result.item.identity.name }}"} {{ 1 if (result.output | default([]) | length > 0 and result.output[0].rc | default(16) | int == 0) else 0 }}
+          {% endfor %}
+      delegate_to: localhost
+      run_once: true
+
     - name: Verification summary
       ansible.builtin.debug:
         msg:
