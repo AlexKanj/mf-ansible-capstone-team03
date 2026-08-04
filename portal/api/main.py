@@ -155,8 +155,8 @@ async def get_overview(
             '})'
             ')'
         ),
-        "racf_users": "max(zos_racf_users_total)",
-        "racf_groups": "max(zos_racf_groups_total)",
+        "racf_users": 'max(zos_racf_users_total{job="racf_latest"})',
+        "racf_groups": 'max(zos_racf_groups_total{job="racf_latest"})',
         "datasets_ready": (
             f'sum(zos_user_dataset_ready{{'
             f'job="provisioning_latest",'

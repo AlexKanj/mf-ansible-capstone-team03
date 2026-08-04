@@ -1,0 +1,935 @@
+2026-08-04T18:25:37.7504409Z Current runner version: '2.336.0'
+2026-08-04T18:25:37.7534909Z ##[group]Runner Image Provisioner
+2026-08-04T18:25:37.7536430Z Hosted Compute Agent
+2026-08-04T18:25:37.7537619Z Version: 20260707.563
+2026-08-04T18:25:37.7538976Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-08-04T18:25:37.7540542Z Build Date: 2026-07-07T19:33:50Z
+2026-08-04T18:25:37.7541960Z Worker ID: {bddaedff-be6d-47df-8e13-5eec538003a5}
+2026-08-04T18:25:37.7543352Z Azure Region: northcentralus
+2026-08-04T18:25:37.7544641Z ##[endgroup]
+2026-08-04T18:25:37.7546694Z ##[group]Operating System
+2026-08-04T18:25:37.7547989Z Ubuntu
+2026-08-04T18:25:37.7549095Z 24.04.4
+2026-08-04T18:25:37.7550323Z LTS
+2026-08-04T18:25:37.7551528Z ##[endgroup]
+2026-08-04T18:25:37.7552700Z ##[group]Runner Image
+2026-08-04T18:25:37.7553968Z Image: ubuntu-24.04
+2026-08-04T18:25:37.7555163Z Version: 20260720.247.2
+2026-08-04T18:25:37.7557226Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+2026-08-04T18:25:37.7559863Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+2026-08-04T18:25:37.7561636Z ##[endgroup]
+2026-08-04T18:25:37.7563988Z ##[group]GITHUB_TOKEN Permissions
+2026-08-04T18:25:37.7567077Z Contents: read
+2026-08-04T18:25:37.7568366Z Metadata: read
+2026-08-04T18:25:37.7569840Z Packages: read
+2026-08-04T18:25:37.7571036Z ##[endgroup]
+2026-08-04T18:25:37.7573963Z Secret source: Actions
+2026-08-04T18:25:37.7576330Z Prepare workflow directory
+2026-08-04T18:25:37.8103681Z Prepare all required actions
+2026-08-04T18:25:37.8172845Z Getting action download info
+2026-08-04T18:25:38.0744844Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-08-04T18:25:38.4696190Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-08-04T18:25:38.6755309Z Complete job name: Run Ansible playbook on z/OS
+2026-08-04T18:25:38.7353446Z ##[group]Checking docker version
+2026-08-04T18:25:38.7366820Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2026-08-04T18:25:38.8292470Z '1.48'
+2026-08-04T18:25:38.8308552Z Docker daemon API version: '1.48'
+2026-08-04T18:25:38.8310116Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2026-08-04T18:25:38.8527322Z '1.48'
+2026-08-04T18:25:38.8542703Z Docker client API version: '1.48'
+2026-08-04T18:25:38.8549706Z ##[endgroup]
+2026-08-04T18:25:38.8552726Z ##[group]Clean up resources from previous jobs
+2026-08-04T18:25:38.8559496Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=622e8b"
+2026-08-04T18:25:38.8723587Z ##[command]/usr/bin/docker network prune --force --filter "label=622e8b"
+2026-08-04T18:25:38.8872556Z ##[endgroup]
+2026-08-04T18:25:38.8873476Z ##[group]Create local container network
+2026-08-04T18:25:38.8885239Z ##[command]/usr/bin/docker network create --label 622e8b github_network_e258ac125ebc4a61af6dfb27b2fa32a3
+2026-08-04T18:25:38.9497468Z ff5f7d354f1a6809aff13aa83dd46ba5fbee2adc149123c5d2a04a3e0ce1ab40
+2026-08-04T18:25:38.9519912Z ##[endgroup]
+2026-08-04T18:25:38.9545843Z ##[group]Starting job container
+2026-08-04T18:25:38.9568771Z ##[command]/usr/bin/docker pull innovationinsoftware/mf-ansible:1.8.0
+2026-08-04T18:25:39.3835943Z 1.8.0: Pulling from innovationinsoftware/mf-ansible
+2026-08-04T18:25:39.3844602Z 72c03230f136: Pulling fs layer
+2026-08-04T18:25:39.3868022Z 8c471a93fc52: Pulling fs layer
+2026-08-04T18:25:39.3869438Z 8bd2cf7d3f6a: Pulling fs layer
+2026-08-04T18:25:39.3870536Z 3250ea7ceadc: Pulling fs layer
+2026-08-04T18:25:39.3871564Z 0beb85bd33c7: Pulling fs layer
+2026-08-04T18:25:39.3872622Z 7d1f86cd5ed9: Pulling fs layer
+2026-08-04T18:25:39.3873929Z 1e884cfcee5a: Pulling fs layer
+2026-08-04T18:25:39.3874956Z 0beb85bd33c7: Waiting
+2026-08-04T18:25:39.3875916Z 7d1f86cd5ed9: Waiting
+2026-08-04T18:25:39.3876771Z 1e884cfcee5a: Waiting
+2026-08-04T18:25:39.3877614Z 3250ea7ceadc: Waiting
+2026-08-04T18:25:39.4730453Z 8c471a93fc52: Download complete
+2026-08-04T18:25:39.5153188Z 8bd2cf7d3f6a: Verifying Checksum
+2026-08-04T18:25:39.5155267Z 8bd2cf7d3f6a: Download complete
+2026-08-04T18:25:39.5607893Z 3250ea7ceadc: Verifying Checksum
+2026-08-04T18:25:39.5611363Z 3250ea7ceadc: Download complete
+2026-08-04T18:25:39.5709900Z 72c03230f136: Verifying Checksum
+2026-08-04T18:25:39.5713070Z 72c03230f136: Download complete
+2026-08-04T18:25:39.6325575Z 0beb85bd33c7: Verifying Checksum
+2026-08-04T18:25:39.6327984Z 0beb85bd33c7: Download complete
+2026-08-04T18:25:39.6523402Z 1e884cfcee5a: Verifying Checksum
+2026-08-04T18:25:39.6526757Z 1e884cfcee5a: Download complete
+2026-08-04T18:25:39.9497838Z 7d1f86cd5ed9: Verifying Checksum
+2026-08-04T18:25:39.9499136Z 7d1f86cd5ed9: Download complete
+2026-08-04T18:25:40.6263205Z 72c03230f136: Pull complete
+2026-08-04T18:25:42.2836846Z 8c471a93fc52: Pull complete
+2026-08-04T18:25:43.0268248Z 8bd2cf7d3f6a: Pull complete
+2026-08-04T18:25:43.0383041Z 3250ea7ceadc: Pull complete
+2026-08-04T18:25:43.2211817Z 0beb85bd33c7: Pull complete
+2026-08-04T18:25:55.8202230Z 7d1f86cd5ed9: Pull complete
+2026-08-04T18:25:55.8662175Z 1e884cfcee5a: Pull complete
+2026-08-04T18:25:55.8712897Z Digest: sha256:80c466aa88d7d7437f5ad60d3bfc72dd857041c02aec9fb43d9db129329d8c03
+2026-08-04T18:25:55.8719498Z Status: Downloaded newer image for innovationinsoftware/mf-ansible:1.8.0
+2026-08-04T18:25:55.8728581Z docker.io/innovationinsoftware/mf-ansible:1.8.0
+2026-08-04T18:25:55.8833818Z ##[command]/usr/bin/docker create --name 4985e45e6fbf462dbc51074fd1889396_innovationinsoftwaremfansible180_48db84 --label 622e8b --workdir /__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03 --network github_network_e258ac125ebc4a61af6dfb27b2fa32a3  -e "HOME=/github/home" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work":"/__w" -v "/home/runner/actions-runner/extracted/externals":"/__e":ro -v "/home/runner/work/_temp":"/__w/_temp" -v "/home/runner/work/_actions":"/__w/_actions" -v "/opt/hostedtoolcache":"/__t" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" --entrypoint "tail" innovationinsoftware/mf-ansible:1.8.0 "-f" "/dev/null"
+2026-08-04T18:25:55.9108470Z 631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b
+2026-08-04T18:25:55.9135491Z ##[command]/usr/bin/docker start 631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b
+2026-08-04T18:25:56.1005097Z 631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b
+2026-08-04T18:25:56.1027934Z ##[command]/usr/bin/docker ps --all --filter id=631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2026-08-04T18:25:56.1157649Z 631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b Up Less than a second
+2026-08-04T18:25:56.1181006Z ##[command]/usr/bin/docker inspect --format "{{range .Config.Env}}{{println .}}{{end}}" 631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b
+2026-08-04T18:25:56.1313647Z HOME=/github/home
+2026-08-04T18:25:56.1314207Z GITHUB_ACTIONS=true
+2026-08-04T18:25:56.1314615Z CI=true
+2026-08-04T18:25:56.1315199Z PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+2026-08-04T18:25:56.1315876Z LANG=C.UTF-8
+2026-08-04T18:25:56.1316309Z GPG_KEY=A035C8C19219BA821ECEA86B64E628F8D684696D
+2026-08-04T18:25:56.1316843Z PYTHON_VERSION=3.11.15
+2026-08-04T18:25:56.1317417Z PYTHON_SHA256=272179ddd9a2e41a0fc8e42e33dfbdca0b3711aa5abf372d3f2d51543d09b625
+2026-08-04T18:25:56.1341360Z ##[endgroup]
+2026-08-04T18:25:56.1350967Z ##[group]Waiting for all services to be ready
+2026-08-04T18:25:56.1352858Z ##[endgroup]
+2026-08-04T18:25:56.1659557Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-04T18:25:56.1667848Z ##[group]Run actions/checkout@v4
+2026-08-04T18:25:56.1668771Z with:
+2026-08-04T18:25:56.1669239Z   repository: AlexKanj/mf-ansible-capstone-team03
+2026-08-04T18:25:56.1672317Z   token: ***
+2026-08-04T18:25:56.1672732Z   ssh-strict: true
+2026-08-04T18:25:56.1673153Z   ssh-user: git
+2026-08-04T18:25:56.1673600Z   persist-credentials: true
+2026-08-04T18:25:56.1674027Z   clean: true
+2026-08-04T18:25:56.1696634Z   sparse-checkout-cone-mode: true
+2026-08-04T18:25:56.1697170Z   fetch-depth: 1
+2026-08-04T18:25:56.1697575Z   fetch-tags: false
+2026-08-04T18:25:56.1697982Z   show-progress: true
+2026-08-04T18:25:56.1698372Z   lfs: false
+2026-08-04T18:25:56.1698813Z   submodules: false
+2026-08-04T18:25:56.1699212Z   set-safe-directory: true
+2026-08-04T18:25:56.1699812Z   allow-unsafe-pr-checkout: false
+2026-08-04T18:25:56.1700698Z ##[endgroup]
+2026-08-04T18:25:56.1766800Z ##[command]/usr/bin/docker exec  631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b sh -c "cat /etc/*release | grep ^ID"
+2026-08-04T18:25:56.3924461Z Syncing repository: AlexKanj/mf-ansible-capstone-team03
+2026-08-04T18:25:56.3926272Z ##[group]Getting Git version info
+2026-08-04T18:25:56.3926951Z Working directory is '/__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03'
+2026-08-04T18:25:56.3927895Z ##[endgroup]
+2026-08-04T18:25:56.3928468Z Deleting the contents of '/__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03'
+2026-08-04T18:25:56.3929159Z The repository will be downloaded using the GitHub REST API
+2026-08-04T18:25:56.3930159Z To create a local Git repository instead, add Git 2.18 or higher to the PATH
+2026-08-04T18:25:56.3930768Z Downloading the archive
+2026-08-04T18:25:56.8807253Z Writing archive to disk
+2026-08-04T18:25:56.8818572Z Extracting the archive
+2026-08-04T18:25:56.8940709Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/d75d1923-8216-43fd-953b-7a5fe721a576 -f /__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/d75d1923-8216-43fd-953b-7a5fe721a576.tar.gz
+2026-08-04T18:25:56.9075953Z Resolved version AlexKanj-mf-ansible-capstone-team03-42c678c
+2026-08-04T18:25:56.9346542Z ##[group]Run ansible-galaxy collection install \
+2026-08-04T18:25:56.9347200Z [36;1mansible-galaxy collection install \[0m
+2026-08-04T18:25:56.9347712Z [36;1m  ibm.ibm_zos_core:1.9.3 \[0m
+2026-08-04T18:25:56.9348164Z [36;1m  ibm.ibm_zos_cics:2.2.1 \[0m
+2026-08-04T18:25:56.9348591Z [36;1m  amazon.aws:">=8.0.0" \[0m
+2026-08-04T18:25:56.9349130Z [36;1m  --collections-path /root/.ansible/collections[0m
+2026-08-04T18:25:56.9349879Z [36;1m[0m
+2026-08-04T18:25:56.9350286Z [36;1mpip install --quiet boto3 botocore[0m
+2026-08-04T18:25:56.9350747Z [36;1m[0m
+2026-08-04T18:25:56.9351136Z [36;1mansible-galaxy collection list[0m
+2026-08-04T18:25:56.9354405Z shell: sh -e {0}
+2026-08-04T18:25:56.9354822Z ##[endgroup]
+2026-08-04T18:25:57.3469909Z [WARNING]: The specified collections path '/root/.ansible/collections' appears to be part of the pip Ansible package. Managing these directly with ansible-galaxy could break the Ansible package. Install collections to a configured collections path, which will take precedence over collections found in the PYTHONPATH.
+2026-08-04T18:26:06.1489179Z Starting galaxy collection install process
+2026-08-04T18:26:06.1490165Z Process install dependency map
+2026-08-04T18:26:06.1490651Z Starting collection install process
+2026-08-04T18:26:06.1491170Z 'amazon.aws:10.1.2' is already installed, skipping.
+2026-08-04T18:26:06.1492853Z Downloading https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections/artifacts/ibm-ibm_zos_core-1.9.3.tar.gz to /github/home/.ansible/tmp/ansible-local-41kz7m7857/tmp1vr97odd/ibm-ibm_zos_core-1.9.3-eqminfj5
+2026-08-04T18:26:06.1494847Z Installing 'ibm.ibm_zos_core:1.9.3' to '/root/.ansible/collections/ansible_collections/ibm/ibm_zos_core'
+2026-08-04T18:26:06.1495862Z ibm.ibm_zos_core:1.9.3 was installed successfully
+2026-08-04T18:26:06.1497583Z Downloading https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections/artifacts/ibm-ibm_zos_cics-2.2.1.tar.gz to /github/home/.ansible/tmp/ansible-local-41kz7m7857/tmp1vr97odd/ibm-ibm_zos_cics-2.2.1-yl4gn7kh
+2026-08-04T18:26:06.1500467Z Installing 'ibm.ibm_zos_cics:2.2.1' to '/root/.ansible/collections/ansible_collections/ibm/ibm_zos_cics'
+2026-08-04T18:26:06.1501583Z ibm.ibm_zos_cics:2.2.1 was installed successfully
+2026-08-04T18:26:06.4724157Z WARNING: The directory '/github/home/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+2026-08-04T18:26:08.7963018Z WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+2026-08-04T18:26:08.8569100Z 
+2026-08-04T18:26:08.8570101Z [notice] A new release of pip is available: 24.0 -> 26.2
+2026-08-04T18:26:08.8570899Z [notice] To update, run: pip install --upgrade pip
+2026-08-04T18:26:09.3595802Z 
+2026-08-04T18:26:09.3596944Z # /usr/local/lib/python3.11/site-packages/ansible/_internal/ansible_collections
+2026-08-04T18:26:09.3597971Z Collection                               Version
+2026-08-04T18:26:09.3598736Z ---------------------------------------- -------
+2026-08-04T18:26:09.3599686Z ansible._protomatter                     2.19.11
+2026-08-04T18:26:09.3600147Z 
+2026-08-04T18:26:09.3600534Z # /usr/local/lib/python3.11/site-packages/ansible_collections
+2026-08-04T18:26:09.3601381Z Collection                               Version
+2026-08-04T18:26:09.3601889Z ---------------------------------------- -------
+2026-08-04T18:26:09.3602383Z amazon.aws                               10.1.2 
+2026-08-04T18:26:09.3602861Z ansible.netcommon                        8.2.0  
+2026-08-04T18:26:09.3603334Z ansible.posix                            2.1.0  
+2026-08-04T18:26:09.3603801Z ansible.utils                            6.0.0  
+2026-08-04T18:26:09.3604708Z ansible.windows                          3.3.0  
+2026-08-04T18:26:09.3605234Z arista.eos                               12.0.0 
+2026-08-04T18:26:09.3605722Z awx.awx                                  24.6.1 
+2026-08-04T18:26:09.3606192Z azure.azcollection                       3.12.0 
+2026-08-04T18:26:09.3606678Z check_point.mgmt                         6.7.0  
+2026-08-04T18:26:09.3607181Z chocolatey.chocolatey                    1.5.3  
+2026-08-04T18:26:09.3607649Z cisco.aci                                2.13.0 
+2026-08-04T18:26:09.3608135Z cisco.dnac                               6.43.0 
+2026-08-04T18:26:09.3608613Z cisco.intersight                         2.12.0 
+2026-08-04T18:26:09.3609109Z cisco.ios                                11.1.1 
+2026-08-04T18:26:09.3609842Z cisco.iosxr                              12.1.0 
+2026-08-04T18:26:09.3610314Z cisco.meraki                             2.21.9 
+2026-08-04T18:26:09.3610779Z cisco.mso                                2.12.0 
+2026-08-04T18:26:09.3611254Z cisco.nxos                               11.1.0 
+2026-08-04T18:26:09.3611726Z cisco.ucs                                1.16.0 
+2026-08-04T18:26:09.3612194Z cloudscale_ch.cloud                      2.5.2  
+2026-08-04T18:26:09.3612664Z community.aws                            10.0.0 
+2026-08-04T18:26:09.3613168Z community.ciscosmb                       1.0.11 
+2026-08-04T18:26:09.3613660Z community.crypto                         3.0.5  
+2026-08-04T18:26:09.3614153Z community.digitalocean                   1.27.0 
+2026-08-04T18:26:09.3614812Z community.dns                            3.4.1  
+2026-08-04T18:26:09.3615297Z community.docker                         4.8.5  
+2026-08-04T18:26:09.3615769Z community.general                        11.4.2 
+2026-08-04T18:26:09.3616246Z community.grafana                        2.3.0  
+2026-08-04T18:26:09.3616718Z community.hashi_vault                    7.1.0  
+2026-08-04T18:26:09.3617192Z community.hrobot                         2.7.0  
+2026-08-04T18:26:09.3617910Z community.library_inventory_filtering_v1 1.1.5  
+2026-08-04T18:26:09.3618413Z community.libvirt                        2.0.0  
+2026-08-04T18:26:09.3618931Z community.mongodb                        1.7.10 
+2026-08-04T18:26:09.3619571Z community.mysql                          3.16.1 
+2026-08-04T18:26:09.3620048Z community.okd                            5.0.0  
+2026-08-04T18:26:09.3620528Z community.postgresql                     4.2.0  
+2026-08-04T18:26:09.3621016Z community.proxmox                        1.4.0  
+2026-08-04T18:26:09.3621498Z community.proxysql                       1.7.0  
+2026-08-04T18:26:09.3621975Z community.rabbitmq                       1.6.0  
+2026-08-04T18:26:09.3622449Z community.routeros                       3.14.0 
+2026-08-04T18:26:09.3622924Z community.sap_libs                       1.5.0  
+2026-08-04T18:26:09.3623392Z community.sops                           2.2.7  
+2026-08-04T18:26:09.3623863Z community.vmware                         5.10.0 
+2026-08-04T18:26:09.3624352Z community.windows                        3.1.0  
+2026-08-04T18:26:09.3624830Z community.zabbix                         4.1.1  
+2026-08-04T18:26:09.3625306Z containers.podman                        1.18.0 
+2026-08-04T18:26:09.3625780Z cyberark.conjur                          1.3.9  
+2026-08-04T18:26:09.3626261Z cyberark.pas                             1.0.36 
+2026-08-04T18:26:09.3626751Z dellemc.enterprise_sonic                 3.2.0  
+2026-08-04T18:26:09.3627236Z dellemc.openmanage                       9.12.3 
+2026-08-04T18:26:09.3627717Z dellemc.powerflex                        2.6.1  
+2026-08-04T18:26:09.3628262Z dellemc.unity                            2.1.0  
+2026-08-04T18:26:09.3628747Z f5networks.f5_modules                    1.39.0 
+2026-08-04T18:26:09.3629237Z fortinet.fortimanager                    2.11.0 
+2026-08-04T18:26:09.3629834Z fortinet.fortios                         2.4.2  
+2026-08-04T18:26:09.3630308Z google.cloud                             1.10.2 
+2026-08-04T18:26:09.3630800Z grafana.grafana                          6.0.6  
+2026-08-04T18:26:09.3631451Z hetzner.hcloud                           5.4.0  
+2026-08-04T18:26:09.3631964Z hitachivantara.vspone_block              4.5.0  
+2026-08-04T18:26:09.3632497Z hitachivantara.vspone_object             1.1.1  
+2026-08-04T18:26:09.3632991Z ibm.qradar                               4.0.0  
+2026-08-04T18:26:09.3633471Z ibm.storage_virtualize                   2.7.4  
+2026-08-04T18:26:09.3634034Z ieisystem.inmanage                       3.0.0  
+2026-08-04T18:26:09.3634514Z infinidat.infinibox                      1.6.3  
+2026-08-04T18:26:09.3634994Z infoblox.nios_modules                    1.8.0  
+2026-08-04T18:26:09.3635472Z inspur.ispim                             2.2.4  
+2026-08-04T18:26:09.3635967Z junipernetworks.junos                    11.0.0 
+2026-08-04T18:26:09.3636454Z kaytus.ksmanage                          2.0.0  
+2026-08-04T18:26:09.3636934Z kubernetes.core                          6.2.0  
+2026-08-04T18:26:09.3637421Z kubevirt.core                            2.2.3  
+2026-08-04T18:26:09.3637921Z lowlydba.sqlserver                       2.7.0  
+2026-08-04T18:26:09.3638396Z microsoft.ad                             1.10.0 
+2026-08-04T18:26:09.3638880Z microsoft.iis                            1.1.0  
+2026-08-04T18:26:09.3639579Z netapp.cloudmanager                      21.24.0
+2026-08-04T18:26:09.3640160Z netapp.ontap                             23.2.0 
+2026-08-04T18:26:09.3640654Z netapp.storagegrid                       21.15.0
+2026-08-04T18:26:09.3641134Z netapp_eseries.santricity                1.4.1  
+2026-08-04T18:26:09.3641611Z netbox.netbox                            3.21.0 
+2026-08-04T18:26:09.3642079Z ngine_io.cloudstack                      2.5.0  
+2026-08-04T18:26:09.3642558Z openstack.cloud                          2.5.0  
+2026-08-04T18:26:09.3643048Z ovirt.ovirt                              3.2.1  
+2026-08-04T18:26:09.3643532Z purestorage.flasharray                   1.40.0 
+2026-08-04T18:26:09.3644208Z purestorage.flashblade                   1.22.0 
+2026-08-04T18:26:09.3644711Z ravendb.ravendb                          1.0.4  
+2026-08-04T18:26:09.3645418Z splunk.es                                4.0.0  
+2026-08-04T18:26:09.3646425Z telekom_mms.icinga_director              2.5.0  
+2026-08-04T18:26:09.3647283Z theforeman.foreman                       5.7.0  
+2026-08-04T18:26:09.3648165Z vmware.vmware                            2.6.0  
+2026-08-04T18:26:09.3664727Z vmware.vmware_rest                       4.9.0  
+2026-08-04T18:26:09.3665462Z vultr.cloud                              1.13.0 
+2026-08-04T18:26:09.3666120Z vyos.vyos                                6.0.0  
+2026-08-04T18:26:09.3666598Z wti.remote                               1.0.10 
+2026-08-04T18:26:09.4217755Z ##[group]Run mkdir -p .ssh
+2026-08-04T18:26:09.4218686Z [36;1mmkdir -p .ssh[0m
+2026-08-04T18:26:09.4219108Z [36;1mchmod 700 .ssh[0m
+2026-08-04T18:26:09.4219893Z [36;1mprintf '%s\n' "$ID_RSA" > .ssh/id_rsa[0m
+2026-08-04T18:26:09.4220412Z [36;1mchmod 600 .ssh/id_rsa[0m
+2026-08-04T18:26:09.4220874Z [36;1mexport ANSIBLE_HOST_KEY_CHECKING=False[0m
+2026-08-04T18:26:09.4221350Z [36;1m[0m
+2026-08-04T18:26:09.4221730Z [36;1mcase "${PLAYBOOK_NAME}" in[0m
+2026-08-04T18:26:09.4222168Z [36;1m  *.yml)[0m
+2026-08-04T18:26:09.4222540Z [36;1m    ;;[0m
+2026-08-04T18:26:09.4222916Z [36;1m  *)[0m
+2026-08-04T18:26:09.4223443Z [36;1m    echo "PLAYBOOK_NAME must be a .yml file in the ansible directory."[0m
+2026-08-04T18:26:09.4224020Z [36;1m    exit 2[0m
+2026-08-04T18:26:09.4224406Z [36;1m    ;;[0m
+2026-08-04T18:26:09.4224775Z [36;1mesac[0m
+2026-08-04T18:26:09.4225137Z [36;1m[0m
+2026-08-04T18:26:09.4225526Z [36;1mif [ ! -f "${PLAYBOOK_NAME}" ]; then[0m
+2026-08-04T18:26:09.4226163Z [36;1m  echo "PLAYBOOK_NAME '${PLAYBOOK_NAME}' was not found under ansible/."[0m
+2026-08-04T18:26:09.4226728Z [36;1m  exit 2[0m
+2026-08-04T18:26:09.4227103Z [36;1mfi[0m
+2026-08-04T18:26:09.4227467Z [36;1m[0m
+2026-08-04T18:26:09.4227841Z [36;1mexport START_TIME=$(date +%s)[0m
+2026-08-04T18:26:09.4228291Z [36;1m[0m
+2026-08-04T18:26:09.4228667Z [36;1mcat > extra_vars.yml <<EOF[0m
+2026-08-04T18:26:09.4229101Z [36;1mjcl_file: "${JCL_FILE}"[0m
+2026-08-04T18:26:09.4229785Z [36;1mstudent_id: "${STUDENT_ID}"[0m
+2026-08-04T18:26:09.4230246Z [36;1mrebuild_racf: "${REBUILD_RACF}"[0m
+2026-08-04T18:26:09.4230742Z [36;1mrebuild_datasets: "${REBUILD_DATASETS}"[0m
+2026-08-04T18:26:09.4231221Z [36;1mjcl_text: |[0m
+2026-08-04T18:26:09.4231619Z [36;1mEOF[0m
+2026-08-04T18:26:09.4231981Z [36;1m[0m
+2026-08-04T18:26:09.4232434Z [36;1m# Preserve newlines and indentation for inline JCL text.[0m
+2026-08-04T18:26:09.4233070Z [36;1mprintf '%s\n' "${JCL_TEXT}" | sed 's/^/  /' >> extra_vars.yml[0m
+2026-08-04T18:26:09.4233610Z [36;1m[0m
+2026-08-04T18:26:09.4233968Z [36;1mset +e[0m
+2026-08-04T18:26:09.4234336Z [36;1m[0m
+2026-08-04T18:26:09.4234856Z [36;1m# CHANGE_PAYLOAD carries racf_apply_change.yml's vars as one JSON object.[0m
+2026-08-04T18:26:09.4235491Z [36;1mif [ -z "${CHANGE_PAYLOAD}" ]; then[0m
+2026-08-04T18:26:09.4235974Z [36;1m  CHANGE_PAYLOAD="{}"[0m
+2026-08-04T18:26:09.4236388Z [36;1mfi[0m
+2026-08-04T18:26:09.4236746Z [36;1m[0m
+2026-08-04T18:26:09.4237116Z [36;1mansible-playbook \[0m
+2026-08-04T18:26:09.4237538Z [36;1m  -u ibmuser \[0m
+2026-08-04T18:26:09.4237947Z [36;1m  -i inventory.yml \[0m
+2026-08-04T18:26:09.4238380Z [36;1m  --private-key .ssh/id_rsa \[0m
+2026-08-04T18:26:09.4238842Z [36;1m  -e @extra_vars.yml \[0m
+2026-08-04T18:26:09.4239493Z [36;1m  -e "${CHANGE_PAYLOAD}" \[0m
+2026-08-04T18:26:09.4239945Z [36;1m  ${PLAYBOOK_NAME}[0m
+2026-08-04T18:26:09.4240351Z [36;1m[0m
+2026-08-04T18:26:09.4240710Z [36;1mRESULT=$?[0m
+2026-08-04T18:26:09.4241099Z [36;1mset -e[0m
+2026-08-04T18:26:09.4241471Z [36;1m[0m
+2026-08-04T18:26:09.4241834Z [36;1mEND_TIME=$(date +%s)[0m
+2026-08-04T18:26:09.4242267Z [36;1mDURATION=$((END_TIME - START_TIME))[0m
+2026-08-04T18:26:09.4242747Z [36;1mRUN_TIMESTAMP=$(date +%s)[0m
+2026-08-04T18:26:09.4243387Z [36;1m[0m
+2026-08-04T18:26:09.4243763Z [36;1mif [ "$RESULT" -eq 0 ]; then[0m
+2026-08-04T18:26:09.4244203Z [36;1m  SUCCESS=1[0m
+2026-08-04T18:26:09.4244590Z [36;1m  FAILURE=0[0m
+2026-08-04T18:26:09.4244987Z [36;1melse[0m
+2026-08-04T18:26:09.4245371Z [36;1m  SUCCESS=0[0m
+2026-08-04T18:26:09.4245750Z [36;1m  FAILURE=1[0m
+2026-08-04T18:26:09.4246119Z [36;1mfi[0m
+2026-08-04T18:26:09.4246482Z [36;1m[0m
+2026-08-04T18:26:09.4246858Z [36;1mcat <<EOF > metrics.prom[0m
+2026-08-04T18:26:09.4247553Z [36;1m# HELP github_ansible_playbook_latest_success Whether the latest playbook run succeeded[0m
+2026-08-04T18:26:09.4248275Z [36;1m# TYPE github_ansible_playbook_latest_success gauge[0m
+2026-08-04T18:26:09.4249440Z [36;1mgithub_ansible_playbook_latest_success{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${SUCCESS}[0m
+2026-08-04T18:26:09.4250184Z [36;1m[0m
+2026-08-04T18:26:09.4250730Z [36;1m# HELP github_ansible_playbook_latest_failure Whether the latest playbook run failed[0m
+2026-08-04T18:26:09.4251422Z [36;1m# TYPE github_ansible_playbook_latest_failure gauge[0m
+2026-08-04T18:26:09.4252205Z [36;1mgithub_ansible_playbook_latest_failure{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${FAILURE}[0m
+2026-08-04T18:26:09.4252922Z [36;1m[0m
+2026-08-04T18:26:09.4253478Z [36;1m# HELP github_ansible_playbook_latest_exit_code Exit code from the latest playbook run[0m
+2026-08-04T18:26:09.4254167Z [36;1m# TYPE github_ansible_playbook_latest_exit_code gauge[0m
+2026-08-04T18:26:09.4254972Z [36;1mgithub_ansible_playbook_latest_exit_code{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${RESULT}[0m
+2026-08-04T18:26:09.4255687Z [36;1m[0m
+2026-08-04T18:26:09.4256264Z [36;1m# HELP github_ansible_playbook_latest_duration_seconds Duration of the latest playbook run[0m
+2026-08-04T18:26:09.4257006Z [36;1m# TYPE github_ansible_playbook_latest_duration_seconds gauge[0m
+2026-08-04T18:26:09.4257863Z [36;1mgithub_ansible_playbook_latest_duration_seconds{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${DURATION}[0m
+2026-08-04T18:26:09.4258608Z [36;1m[0m
+2026-08-04T18:26:09.4259197Z [36;1m# HELP github_ansible_playbook_last_run_timestamp_seconds Unix timestamp of latest playbook run[0m
+2026-08-04T18:26:09.4260186Z [36;1m# TYPE github_ansible_playbook_last_run_timestamp_seconds gauge[0m
+2026-08-04T18:26:09.4261085Z [36;1mgithub_ansible_playbook_last_run_timestamp_seconds{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}"} ${RUN_TIMESTAMP}[0m
+2026-08-04T18:26:09.4261846Z [36;1m[0m
+2026-08-04T18:26:09.4262379Z [36;1m# HELP github_ansible_playbook_run_success One time series per successful build[0m
+2026-08-04T18:26:09.4263060Z [36;1m# TYPE github_ansible_playbook_run_success gauge[0m
+2026-08-04T18:26:09.4263923Z [36;1mgithub_ansible_playbook_run_success{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}",build="${BUILD_NUMBER}"} ${SUCCESS}[0m
+2026-08-04T18:26:09.4264706Z [36;1m[0m
+2026-08-04T18:26:09.4265223Z [36;1m# HELP github_ansible_playbook_run_failure One time series per failed build[0m
+2026-08-04T18:26:09.4265881Z [36;1m# TYPE github_ansible_playbook_run_failure gauge[0m
+2026-08-04T18:26:09.4266695Z [36;1mgithub_ansible_playbook_run_failure{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}",build="${BUILD_NUMBER}"} ${FAILURE}[0m
+2026-08-04T18:26:09.4267477Z [36;1m[0m
+2026-08-04T18:26:09.4268021Z [36;1m# HELP github_ansible_playbook_run_duration_seconds Duration for this specific build[0m
+2026-08-04T18:26:09.4268769Z [36;1m# TYPE github_ansible_playbook_run_duration_seconds gauge[0m
+2026-08-04T18:26:09.4269973Z [36;1mgithub_ansible_playbook_run_duration_seconds{playbook="${PLAYBOOK_NAME}",repo="${REPO_SLUG}",branch="${BRANCH}",build="${BUILD_NUMBER}"} ${DURATION}[0m
+2026-08-04T18:26:09.4270799Z [36;1mEOF[0m
+2026-08-04T18:26:09.4271175Z [36;1m[0m
+2026-08-04T18:26:09.4271609Z [36;1m# Append job-level metrics if run_jcl.yml wrote them[0m
+2026-08-04T18:26:09.4272348Z [36;1mif [ -f job_metrics.prom ]; then[0m
+2026-08-04T18:26:09.4272871Z [36;1m  cat job_metrics.prom >> metrics.prom[0m
+2026-08-04T18:26:09.4273360Z [36;1mfi[0m
+2026-08-04T18:26:09.4273729Z [36;1m[0m
+2026-08-04T18:26:09.4274184Z [36;1m# Append RACF metrics when the RACF playbook creates them[0m
+2026-08-04T18:26:09.4274753Z [36;1mif [ -f racf_metrics.prom ]; then[0m
+2026-08-04T18:26:09.4275269Z [36;1m  cat racf_metrics.prom >> metrics.prom[0m
+2026-08-04T18:26:09.4275739Z [36;1mfi[0m
+2026-08-04T18:26:09.4276098Z [36;1m[0m
+2026-08-04T18:26:09.4276595Z [36;1m# Provisioning state is pushed separately using a stable grouping key[0m
+2026-08-04T18:26:09.4277383Z [36;1m# so the newest run replaces the previous state.[0m
+2026-08-04T18:26:09.4277891Z [36;1m[0m
+2026-08-04T18:26:09.4278351Z [36;1m# Append CICS metrics when the report playbook creates them[0m
+2026-08-04T18:26:09.4278920Z [36;1mif [ -f cics_metrics.prom ]; then[0m
+2026-08-04T18:26:09.4279692Z [36;1m  cat cics_metrics.prom >> metrics.prom[0m
+2026-08-04T18:26:09.4280175Z [36;1mfi[0m
+2026-08-04T18:26:09.4280537Z [36;1m[0m
+2026-08-04T18:26:09.4280912Z [36;1m# append db2batch data[0m
+2026-08-04T18:26:09.4281354Z [36;1mif [ -f db2_metrics.prom ]; then[0m
+2026-08-04T18:26:09.4281858Z [36;1m  cat db2_metrics.prom >> metrics.prom[0m
+2026-08-04T18:26:09.4282322Z [36;1mfi[0m
+2026-08-04T18:26:09.4282679Z [36;1m[0m
+2026-08-04T18:26:09.4283154Z [36;1m# Optionally collect a system snapshot after another playbook.[0m
+2026-08-04T18:26:09.4283833Z [36;1m# Do not run it twice when gather_mf_metrics.yml is already selected.[0m
+2026-08-04T18:26:09.4284424Z [36;1mif [ "${RUN_MF_METRICS}" = "true" ] &&[0m
+2026-08-04T18:26:09.4284950Z [36;1m  [ "${PLAYBOOK_NAME}" != "report.yml" ] &&[0m
+2026-08-04T18:26:09.4285507Z [36;1m  [ "${PLAYBOOK_NAME}" != "gather_mf_metrics.yml" ]; then[0m
+2026-08-04T18:26:09.4286027Z [36;1m[0m
+2026-08-04T18:26:09.4286447Z [36;1m  echo "Collecting mainframe system metrics..."[0m
+2026-08-04T18:26:09.4286952Z [36;1m[0m
+2026-08-04T18:26:09.4287324Z [36;1m  ansible-playbook \[0m
+2026-08-04T18:26:09.4287761Z [36;1m    -u ibmuser \[0m
+2026-08-04T18:26:09.4288191Z [36;1m    -i inventory.yml \[0m
+2026-08-04T18:26:09.4288646Z [36;1m    --private-key .ssh/id_rsa \[0m
+2026-08-04T18:26:09.4289123Z [36;1m    gather_mf_metrics.yml[0m
+2026-08-04T18:26:09.4289671Z [36;1mfi[0m
+2026-08-04T18:26:09.4290041Z [36;1m[0m
+2026-08-04T18:26:09.4290419Z [36;1mcat metrics.prom[0m
+2026-08-04T18:26:09.4290826Z [36;1m[0m
+2026-08-04T18:26:09.4291249Z [36;1m# Publish the latest mainframe system snapshot.[0m
+2026-08-04T18:26:09.4291882Z [36;1m# PUT replaces the previous snapshot instead of accumulating runs.[0m
+2026-08-04T18:26:09.4292483Z [36;1mif [ -f mf_metrics.prom ] &&[0m
+2026-08-04T18:26:09.4292961Z [36;1m  [ -n "${PUSHGATEWAY_URL}" ]; then[0m
+2026-08-04T18:26:09.4293421Z [36;1m[0m
+2026-08-04T18:26:09.4293866Z [36;1m  echo "Publishing latest mainframe system snapshot..."[0m
+2026-08-04T18:26:09.4294407Z [36;1m[0m
+2026-08-04T18:26:09.4294806Z [36;1m  curl --fail --show-error --silent \[0m
+2026-08-04T18:26:09.4295293Z [36;1m    --request PUT \[0m
+2026-08-04T18:26:09.4295746Z [36;1m    --data-binary @mf_metrics.prom \[0m
+2026-08-04T18:26:09.4296382Z [36;1m    "${PUSHGATEWAY_URL}/metrics/job/mainframe_system_latest/repo/${REPO_SLUG}"[0m
+2026-08-04T18:26:09.4296984Z [36;1m[0m
+2026-08-04T18:26:09.4297347Z [36;1m  echo[0m
+2026-08-04T18:26:09.4297800Z [36;1m  echo "Latest mainframe system snapshot published."[0m
+2026-08-04T18:26:09.4298310Z [36;1mfi[0m
+2026-08-04T18:26:09.4298682Z [36;1m[0m
+2026-08-04T18:26:09.4299159Z [36;1m# Push the latest provisioning state to a stable grouping key.[0m
+2026-08-04T18:26:09.4300019Z [36;1m# PUT replaces the previous provisioning metrics instead of accumulating runs.[0m
+2026-08-04T18:26:09.4300753Z [36;1mif [ -f provision_metrics.prom ] && [ -n "${PUSHGATEWAY_URL}" ]; then[0m
+2026-08-04T18:26:09.4301393Z [36;1m  echo "Publishing latest provisioning state..."[0m
+2026-08-04T18:26:09.4302049Z [36;1m[0m
+2026-08-04T18:26:09.4302456Z [36;1m  curl --fail --show-error --silent \[0m
+2026-08-04T18:26:09.4302924Z [36;1m    --request PUT \[0m
+2026-08-04T18:26:09.4303385Z [36;1m    --data-binary @provision_metrics.prom \[0m
+2026-08-04T18:26:09.4303999Z [36;1m    "${PUSHGATEWAY_URL}/metrics/job/provisioning_latest/repo/${REPO_SLUG}"[0m
+2026-08-04T18:26:09.4304566Z [36;1m[0m
+2026-08-04T18:26:09.4304932Z [36;1m  echo[0m
+2026-08-04T18:26:09.4305365Z [36;1m  echo "Latest provisioning state published."[0m
+2026-08-04T18:26:09.4305846Z [36;1mfi[0m
+2026-08-04T18:26:09.4306207Z [36;1m[0m
+2026-08-04T18:26:09.4306572Z [36;1mexit $RESULT[0m
+2026-08-04T18:26:09.4307274Z shell: sh -e {0}
+2026-08-04T18:26:09.4307667Z env:
+2026-08-04T18:26:09.4308069Z   PLAYBOOK_NAME: racf_apply_change.yml
+2026-08-04T18:26:09.4308514Z   JCL_FILE: 
+2026-08-04T18:26:09.4308886Z   STUDENT_ID: 
+2026-08-04T18:26:09.4309382Z   RUN_MF_METRICS: false
+2026-08-04T18:26:09.4309802Z   REBUILD_RACF: false
+2026-08-04T18:26:09.4310212Z   REBUILD_DATASETS: false
+2026-08-04T18:26:09.4310612Z   JCL_TEXT: 
+2026-08-04T18:26:09.4311254Z   CHANGE_PAYLOAD: {"change_action": "add_user", "change_userid": "U03D03", "change_group": "D03GPT", "change_access": "ALTER"}
+2026-08-04T18:26:09.4311981Z   REPO_SLUG: mf-ansible-capstone-team03
+2026-08-04T18:26:09.4312437Z   BRANCH: main
+2026-08-04T18:26:09.4312807Z   BUILD_NUMBER: 80
+2026-08-04T18:26:09.4313412Z   PUSHGATEWAY_URL: ***
+2026-08-04T18:26:09.4327891Z   ID_RSA: ***
+2026-08-04T18:26:09.4328365Z   ANSIBLE_COLLECTIONS_PATHS: /root/.ansible/collections
+2026-08-04T18:26:09.4328904Z   PYTHONPATH: /root/.ansible/collections
+2026-08-04T18:26:09.4329553Z   RACF_CONFIG_S3_BUCKET: monitoring-racf-state-593793068421
+2026-08-04T18:26:09.4330095Z   RACF_CONFIG_S3_KEY: racf/managed.json
+2026-08-04T18:26:09.4330553Z   AWS_DEFAULT_REGION: us-west-1
+2026-08-04T18:26:09.4331021Z   AWS_ACCESS_KEY_ID: ***
+2026-08-04T18:26:09.4331536Z   AWS_SECRET_ACCESS_KEY: ***
+2026-08-04T18:26:09.4331960Z ##[endgroup]
+2026-08-04T18:26:10.0243763Z 
+2026-08-04T18:26:10.0244722Z PLAY [Apply a single targeted RACF change] *************************************
+2026-08-04T18:26:10.0245376Z 
+2026-08-04T18:26:10.0245799Z TASK [Load managed RACF configuration] *****************************************
+2026-08-04T18:26:10.0548598Z included: /__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/ansible/tasks/load_racf_config.yml for mainframe
+2026-08-04T18:26:10.0549667Z 
+2026-08-04T18:26:10.0550123Z TASK [Determine RACF config source] ********************************************
+2026-08-04T18:26:10.0842718Z ok: [mainframe]
+2026-08-04T18:26:10.0843122Z 
+2026-08-04T18:26:10.0843664Z TASK [Load RACF config from local vars file] ***********************************
+2026-08-04T18:26:10.1033914Z skipping: [mainframe]
+2026-08-04T18:26:10.1034332Z 
+2026-08-04T18:26:10.1034837Z TASK [Create temporary file for S3 RACF config] ********************************
+2026-08-04T18:26:10.4726821Z changed: [mainframe -> localhost]
+2026-08-04T18:26:10.4727178Z 
+2026-08-04T18:26:10.4727540Z TASK [Download RACF config from S3] ********************************************
+2026-08-04T18:26:12.0104364Z changed: [mainframe -> localhost]
+2026-08-04T18:26:12.0104719Z 
+2026-08-04T18:26:12.0105061Z TASK [Load RACF config downloaded from S3] *************************************
+2026-08-04T18:26:12.0428936Z ok: [mainframe]
+2026-08-04T18:26:12.0429546Z 
+2026-08-04T18:26:12.0430066Z TASK [Remove temporary RACF config file] ***************************************
+2026-08-04T18:26:12.4407702Z changed: [mainframe -> localhost]
+2026-08-04T18:26:12.4408343Z 
+2026-08-04T18:26:12.4409226Z TASK [Validate RACF config structure] ******************************************
+2026-08-04T18:26:12.4747622Z ok: [mainframe] => {
+2026-08-04T18:26:12.4748422Z     "changed": false,
+2026-08-04T18:26:12.4749019Z     "msg": "All assertions passed"
+2026-08-04T18:26:12.4749763Z }
+2026-08-04T18:26:12.4749952Z 
+2026-08-04T18:26:12.4750680Z TASK [Validate RACF groups have unique names and GIDs] *************************
+2026-08-04T18:26:12.5061911Z ok: [mainframe] => {
+2026-08-04T18:26:12.5062434Z     "changed": false,
+2026-08-04T18:26:12.5062872Z     "msg": "All assertions passed"
+2026-08-04T18:26:12.5063320Z }
+2026-08-04T18:26:12.5063519Z 
+2026-08-04T18:26:12.5063852Z TASK [Materialize RACF variables from loaded state] ****************************
+2026-08-04T18:26:12.5311078Z ok: [mainframe]
+2026-08-04T18:26:12.5311479Z 
+2026-08-04T18:26:12.5312024Z TASK [Create user with SYS1 as the default group] ******************************
+2026-08-04T18:26:37.5163014Z changed: [mainframe]
+2026-08-04T18:26:37.5163876Z 
+2026-08-04T18:26:37.5165308Z TASK [Add TSO segment to user] *************************************************
+2026-08-04T18:26:59.6378316Z changed: [mainframe]
+2026-08-04T18:26:59.6378738Z 
+2026-08-04T18:26:59.6379195Z TASK [Add OMVS segment to user] ************************************************
+2026-08-04T18:27:21.2114559Z changed: [mainframe]
+2026-08-04T18:27:21.2115037Z 
+2026-08-04T18:27:21.2115526Z TASK [Connect user to its managed RACF group] **********************************
+2026-08-04T18:27:42.3875769Z changed: [mainframe]
+2026-08-04T18:27:42.3876207Z 
+2026-08-04T18:27:42.3876686Z TASK [Create USS home directory] ***********************************************
+2026-08-04T18:27:57.7640405Z changed: [mainframe]
+2026-08-04T18:27:57.7640859Z 
+2026-08-04T18:27:57.7641357Z TASK [Create generic RACF data set profile] ************************************
+2026-08-04T18:28:19.6134271Z changed: [mainframe]
+2026-08-04T18:28:19.6152219Z 
+2026-08-04T18:28:19.6154389Z TASK [Grant user access to its data set profile] *******************************
+2026-08-04T18:28:41.2189659Z changed: [mainframe]
+2026-08-04T18:28:41.2190025Z 
+2026-08-04T18:28:41.2190454Z TASK [Refresh generic data set profiles] ***************************************
+2026-08-04T18:29:02.8882931Z changed: [mainframe]
+2026-08-04T18:29:02.8883284Z 
+2026-08-04T18:29:02.8883669Z TASK [Show add_user results] ***************************************************
+2026-08-04T18:29:02.9205734Z ok: [mainframe] => {
+2026-08-04T18:29:02.9206409Z     "msg": {
+2026-08-04T18:29:02.9206940Z         "adduser": [
+2026-08-04T18:29:02.9207489Z             {
+2026-08-04T18:29:02.9208380Z                 "command": "ADDUSER U03D03 DFLTGRP(SYS1) NAME('U03D03') OWNER(IBMUSER) PASSWORD(U03D03)",
+2026-08-04T18:29:02.9209545Z                 "content": [
+2026-08-04T18:29:02.9210130Z                     ""
+2026-08-04T18:29:02.9210665Z                 ],
+2026-08-04T18:29:02.9211205Z                 "failed": false,
+2026-08-04T18:29:02.9211794Z                 "lines": 1,
+2026-08-04T18:29:02.9212396Z                 "rc": 0,
+2026-08-04T18:29:02.9213226Z                 "stderr": ""
+2026-08-04T18:29:02.9214018Z             }
+2026-08-04T18:29:02.9214711Z         ],
+2026-08-04T18:29:02.9215434Z         "connect": [
+2026-08-04T18:29:02.9216208Z             {
+2026-08-04T18:29:02.9217046Z                 "command": "CONNECT U03D03 GROUP(D03GPT)",
+2026-08-04T18:29:02.9218078Z                 "content": [
+2026-08-04T18:29:02.9218904Z                     ""
+2026-08-04T18:29:02.9219851Z                 ],
+2026-08-04T18:29:02.9220584Z                 "failed": false,
+2026-08-04T18:29:02.9221425Z                 "lines": 1,
+2026-08-04T18:29:02.9222139Z                 "rc": 0,
+2026-08-04T18:29:02.9222927Z                 "stderr": ""
+2026-08-04T18:29:02.9223685Z             }
+2026-08-04T18:29:02.9224171Z         ],
+2026-08-04T18:29:02.9224530Z         "dataset_profile": [
+2026-08-04T18:29:02.9224910Z             {
+2026-08-04T18:29:02.9225350Z                 "command": "ADDSD 'U03D03.**' OWNER(U03D03) UACC(NONE)",
+2026-08-04T18:29:02.9225868Z                 "content": [
+2026-08-04T18:29:02.9226257Z                     ""
+2026-08-04T18:29:02.9226622Z                 ],
+2026-08-04T18:29:02.9226994Z                 "failed": false,
+2026-08-04T18:29:02.9227435Z                 "lines": 1,
+2026-08-04T18:29:02.9227824Z                 "rc": 0,
+2026-08-04T18:29:02.9228596Z                 "stderr": ""
+2026-08-04T18:29:02.9228998Z             }
+2026-08-04T18:29:02.9229593Z         ],
+2026-08-04T18:29:02.9229963Z         "home_directory": "",
+2026-08-04T18:29:02.9230372Z         "omvs_segment": [
+2026-08-04T18:29:02.9230759Z             {
+2026-08-04T18:29:02.9231300Z                 "command": "ALTUSER U03D03 OMVS(AUTOUID HOME('/u/u03d03') PROGRAM('/bin/sh'))",
+2026-08-04T18:29:02.9231918Z                 "content": [
+2026-08-04T18:29:02.9232440Z                     "IRR52177I User U03D03 was assigned an OMVS UID value of 6044.",
+2026-08-04T18:29:02.9232991Z                     ""
+2026-08-04T18:29:02.9233367Z                 ],
+2026-08-04T18:29:02.9234023Z                 "failed": false,
+2026-08-04T18:29:02.9234531Z                 "lines": 2,
+2026-08-04T18:29:02.9235001Z                 "rc": 0,
+2026-08-04T18:29:02.9235389Z                 "stderr": ""
+2026-08-04T18:29:02.9235774Z             }
+2026-08-04T18:29:02.9236130Z         ],
+2026-08-04T18:29:02.9236496Z         "permit": [
+2026-08-04T18:29:02.9236860Z             {
+2026-08-04T18:29:02.9237341Z                 "command": "PERMIT 'U03D03.**' ID(U03D03) ACCESS(ALTER) GENERIC",
+2026-08-04T18:29:02.9237884Z                 "content": [
+2026-08-04T18:29:02.9238272Z                     ""
+2026-08-04T18:29:02.9238638Z                 ],
+2026-08-04T18:29:02.9239007Z                 "failed": false,
+2026-08-04T18:29:02.9239604Z                 "lines": 1,
+2026-08-04T18:29:02.9239998Z                 "rc": 0,
+2026-08-04T18:29:02.9240385Z                 "stderr": ""
+2026-08-04T18:29:02.9240770Z             }
+2026-08-04T18:29:02.9241115Z         ],
+2026-08-04T18:29:02.9241490Z         "tso_segment": [
+2026-08-04T18:29:02.9241870Z             {
+2026-08-04T18:29:02.9242433Z                 "command": "ALTUSER U03D03 TSO(ACCTNUM(ACCT001) PROC(DB13PROC) SIZE(2096128) COMMAND(ISPF))",
+2026-08-04T18:29:02.9243060Z                 "content": [
+2026-08-04T18:29:02.9243443Z                     ""
+2026-08-04T18:29:02.9243818Z                 ],
+2026-08-04T18:29:02.9244184Z                 "failed": false,
+2026-08-04T18:29:02.9244582Z                 "lines": 1,
+2026-08-04T18:29:02.9244960Z                 "rc": 0,
+2026-08-04T18:29:02.9245452Z                 "stderr": ""
+2026-08-04T18:29:02.9245847Z             }
+2026-08-04T18:29:02.9246193Z         ]
+2026-08-04T18:29:02.9246540Z     }
+2026-08-04T18:29:02.9246887Z }
+2026-08-04T18:29:02.9247070Z 
+2026-08-04T18:29:02.9247387Z TASK [Delete the user's generic data set profile] ******************************
+2026-08-04T18:29:02.9335136Z skipping: [mainframe]
+2026-08-04T18:29:02.9335521Z 
+2026-08-04T18:29:02.9336038Z TASK [Refresh generic data set profiles after deletion] ************************
+2026-08-04T18:29:02.9458443Z skipping: [mainframe]
+2026-08-04T18:29:02.9458842Z 
+2026-08-04T18:29:02.9459231Z TASK [Delete the user] *********************************************************
+2026-08-04T18:29:02.9580095Z skipping: [mainframe]
+2026-08-04T18:29:02.9580494Z 
+2026-08-04T18:29:02.9580925Z TASK [Show remove_user results] ************************************************
+2026-08-04T18:29:02.9713436Z skipping: [mainframe]
+2026-08-04T18:29:02.9713743Z 
+2026-08-04T18:29:02.9714054Z TASK [Create RACF group] *******************************************************
+2026-08-04T18:29:02.9835605Z skipping: [mainframe]
+2026-08-04T18:29:02.9835917Z 
+2026-08-04T18:29:02.9836247Z TASK [Add OMVS segment to group] ***********************************************
+2026-08-04T18:29:02.9961474Z skipping: [mainframe]
+2026-08-04T18:29:02.9961785Z 
+2026-08-04T18:29:02.9962100Z TASK [Show add_group results] **************************************************
+2026-08-04T18:29:03.0088632Z skipping: [mainframe]
+2026-08-04T18:29:03.0088932Z 
+2026-08-04T18:29:03.0089405Z TASK [Delete RACF group] *******************************************************
+2026-08-04T18:29:03.0213051Z skipping: [mainframe]
+2026-08-04T18:29:03.0213532Z 
+2026-08-04T18:29:03.0214119Z TASK [Show remove_group results] ***********************************************
+2026-08-04T18:29:03.0338645Z skipping: [mainframe]
+2026-08-04T18:29:03.0339033Z 
+2026-08-04T18:29:03.0339663Z TASK [Remove user from its previous group] *************************************
+2026-08-04T18:29:03.0465429Z skipping: [mainframe]
+2026-08-04T18:29:03.0465829Z 
+2026-08-04T18:29:03.0466292Z TASK [Connect user to its new group] *******************************************
+2026-08-04T18:29:03.0591868Z skipping: [mainframe]
+2026-08-04T18:29:03.0592280Z 
+2026-08-04T18:29:03.0592762Z TASK [Show update_membership results] ******************************************
+2026-08-04T18:29:03.0723032Z skipping: [mainframe]
+2026-08-04T18:29:03.0723431Z 
+2026-08-04T18:29:03.0724340Z TASK [Write RACF metrics] ******************************************************
+2026-08-04T18:29:03.8008038Z changed: [mainframe -> localhost]
+2026-08-04T18:29:03.8008398Z 
+2026-08-04T18:29:03.8008734Z PLAY [Provision developer datasets on z/OS] ************************************
+2026-08-04T18:29:03.8009194Z 
+2026-08-04T18:29:03.8009717Z TASK [Provision datasets for each RACF user] ***********************************
+2026-08-04T18:29:03.8504639Z included: /__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/ansible/tasks/provision_user_datasets.yml for mainframe => (item=U03D03)
+2026-08-04T18:29:03.8505367Z 
+2026-08-04T18:29:03.8505703Z TASK [Delete existing datasets only when rebuild is requested] *****************
+2026-08-04T18:29:03.8853790Z skipping: [mainframe] => (item=U03D03.DEV.COBOL) 
+2026-08-04T18:29:03.8854421Z skipping: [mainframe] => (item=U03D03.DEV.JCL) 
+2026-08-04T18:29:03.8854987Z skipping: [mainframe] => (item=U03D03.TST.COBOL) 
+2026-08-04T18:29:03.8855522Z skipping: [mainframe] => (item=U03D03.TST.JCL) 
+2026-08-04T18:29:03.8856067Z skipping: [mainframe]
+2026-08-04T18:29:03.8856297Z 
+2026-08-04T18:29:03.8856641Z TASK [Allocate new partitioned dataset] ****************************************
+2026-08-04T18:30:44.8692762Z ok: [mainframe] => (item=U03D03.DEV.COBOL)
+2026-08-04T18:30:44.8693460Z ok: [mainframe] => (item=U03D03.DEV.JCL)
+2026-08-04T18:30:44.8694037Z ok: [mainframe] => (item=U03D03.TST.COBOL)
+2026-08-04T18:30:44.8694636Z ok: [mainframe] => (item=U03D03.TST.JCL)
+2026-08-04T18:30:44.8694929Z 
+2026-08-04T18:30:44.8695334Z TASK [Warm up remote session] **************************************************
+2026-08-04T18:31:11.8013626Z ok: [mainframe]
+2026-08-04T18:31:11.8014055Z 
+2026-08-04T18:31:11.8014629Z TASK [Seed DEV COBOL and JCL libraries] ****************************************
+2026-08-04T18:31:11.8853370Z included: zos_seed_library for mainframe => (item=U03D03.DEV.COBOL)
+2026-08-04T18:31:11.8854076Z included: zos_seed_library for mainframe => (item=U03D03.DEV.JCL)
+2026-08-04T18:31:11.8854448Z 
+2026-08-04T18:31:11.8854807Z TASK [zos_seed_library : Show library] *****************************************
+2026-08-04T18:31:11.9127752Z ok: [mainframe] => {
+2026-08-04T18:31:11.9128394Z     "library": "COBOL"
+2026-08-04T18:31:11.9128798Z }
+2026-08-04T18:31:11.9128981Z 
+2026-08-04T18:31:11.9129537Z TASK [zos_seed_library : Find members for COBOL] *******************************
+2026-08-04T18:31:12.2893833Z ok: [mainframe -> localhost]
+2026-08-04T18:31:12.2894177Z 
+2026-08-04T18:31:12.2894504Z TASK [zos_seed_library : Show members found] ***********************************
+2026-08-04T18:31:12.3153645Z ok: [mainframe] => {
+2026-08-04T18:31:12.3154284Z     "member_files.files": [
+2026-08-04T18:31:12.3156276Z         {
+2026-08-04T18:31:12.3156869Z             "atime": 1785867956.9013464,
+2026-08-04T18:31:12.3157546Z             "ctime": 1785867956.901447,
+2026-08-04T18:31:12.3158184Z             "dev": 2049,
+2026-08-04T18:31:12.3158738Z             "gid": 0,
+2026-08-04T18:31:12.3159939Z             "gr_name": "root",
+2026-08-04T18:31:12.3160587Z             "inode": 8918479,
+2026-08-04T18:31:12.3161166Z             "isblk": false,
+2026-08-04T18:31:12.3161778Z             "ischr": false,
+2026-08-04T18:31:12.3162527Z             "isdir": false,
+2026-08-04T18:31:12.3163331Z             "isfifo": false,
+2026-08-04T18:31:12.3164812Z             "isgid": false,
+2026-08-04T18:31:12.3165619Z             "islnk": false,
+2026-08-04T18:31:12.3166445Z             "isreg": true,
+2026-08-04T18:31:12.3167224Z             "issock": false,
+2026-08-04T18:31:12.3168057Z             "isuid": false,
+2026-08-04T18:31:12.3168808Z             "mode": "0664",
+2026-08-04T18:31:12.3169812Z             "mtime": 1785867468.0,
+2026-08-04T18:31:12.3170634Z             "nlink": 1,
+2026-08-04T18:31:12.3171944Z             "path": "/__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/ansible/seed_files/COBOL/DATES",
+2026-08-04T18:31:12.3173342Z             "pw_name": "root",
+2026-08-04T18:31:12.3173779Z             "rgrp": true,
+2026-08-04T18:31:12.3174385Z             "roth": true,
+2026-08-04T18:31:12.3174770Z             "rusr": true,
+2026-08-04T18:31:12.3175140Z             "size": 4271,
+2026-08-04T18:31:12.3175515Z             "uid": 0,
+2026-08-04T18:31:12.3175892Z             "wgrp": true,
+2026-08-04T18:31:12.3176285Z             "woth": false,
+2026-08-04T18:31:12.3176673Z             "wusr": true,
+2026-08-04T18:31:12.3177063Z             "xgrp": false,
+2026-08-04T18:31:12.3177447Z             "xoth": false,
+2026-08-04T18:31:12.3177843Z             "xusr": false
+2026-08-04T18:31:12.3178250Z         }
+2026-08-04T18:31:12.3178608Z     ]
+2026-08-04T18:31:12.3178960Z }
+2026-08-04T18:31:12.3179148Z 
+2026-08-04T18:31:12.3179885Z TASK [zos_seed_library : Copy members] *****************************************
+2026-08-04T18:31:12.3524944Z included: /__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/ansible/roles/zos_seed_library/tasks/copy_members.yml for mainframe => (item={'path': '/__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/ansible/seed_files/COBOL/DATES', 'mode': '0664', 'isdir': False, 'ischr': False, 'isblk': False, 'isreg': True, 'isfifo': False, 'islnk': False, 'issock': False, 'uid': 0, 'gid': 0, 'size': 4271, 'inode': 8918479, 'dev': 2049, 'nlink': 1, 'atime': 1785867956.9013464, 'mtime': 1785867468.0, 'ctime': 1785867956.901447, 'gr_name': 'root', 'pw_name': 'root', 'wusr': True, 'rusr': True, 'xusr': False, 'wgrp': True, 'rgrp': True, 'xgrp': False, 'woth': False, 'roth': True, 'xoth': False, 'isuid': False, 'isgid': False})
+2026-08-04T18:31:12.3528806Z 
+2026-08-04T18:31:12.3529248Z TASK [zos_seed_library : Show destination] *************************************
+2026-08-04T18:31:12.4084547Z ok: [mainframe] => {
+2026-08-04T18:31:12.4085303Z     "msg": "U03D03.DEV.COBOL(DATES)"
+2026-08-04T18:31:12.4085913Z }
+2026-08-04T18:31:12.4086170Z 
+2026-08-04T18:31:12.4086575Z TASK [zos_seed_library : Copy member] ******************************************
+2026-08-04T18:33:48.1101789Z changed: [mainframe]
+2026-08-04T18:33:48.1102832Z 
+2026-08-04T18:33:48.1103342Z TASK [zos_seed_library : Show library] *****************************************
+2026-08-04T18:33:48.1400603Z ok: [mainframe] => {
+2026-08-04T18:33:48.1401268Z     "library": "JCL"
+2026-08-04T18:33:48.1401840Z }
+2026-08-04T18:33:48.1402086Z 
+2026-08-04T18:33:48.1402603Z TASK [zos_seed_library : Find members for JCL] *********************************
+2026-08-04T18:33:48.3752730Z ok: [mainframe -> localhost]
+2026-08-04T18:33:48.3753174Z 
+2026-08-04T18:33:48.3753649Z TASK [zos_seed_library : Show members found] ***********************************
+2026-08-04T18:33:48.4015049Z ok: [mainframe] => {
+2026-08-04T18:33:48.4015728Z     "member_files.files": [
+2026-08-04T18:33:48.4016325Z         {
+2026-08-04T18:33:48.4016855Z             "atime": 1785867956.901447,
+2026-08-04T18:33:48.4017522Z             "ctime": 1785867956.9015272,
+2026-08-04T18:33:48.4018163Z             "dev": 2049,
+2026-08-04T18:33:48.4018733Z             "gid": 0,
+2026-08-04T18:33:48.4019474Z             "gr_name": "root",
+2026-08-04T18:33:48.4020116Z             "inode": 8918481,
+2026-08-04T18:33:48.4020727Z             "isblk": false,
+2026-08-04T18:33:48.4021292Z             "ischr": false,
+2026-08-04T18:33:48.4021887Z             "isdir": false,
+2026-08-04T18:33:48.4022580Z             "isfifo": false,
+2026-08-04T18:33:48.4024064Z             "isgid": false,
+2026-08-04T18:33:48.4024828Z             "islnk": false,
+2026-08-04T18:33:48.4025617Z             "isreg": true,
+2026-08-04T18:33:48.4026434Z             "issock": false,
+2026-08-04T18:33:48.4027241Z             "isuid": false,
+2026-08-04T18:33:48.4028038Z             "mode": "0664",
+2026-08-04T18:33:48.4028843Z             "mtime": 1785867468.0,
+2026-08-04T18:33:48.4029834Z             "nlink": 1,
+2026-08-04T18:33:48.4031180Z             "path": "/__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/ansible/seed_files/JCL/HELLO.jcl",
+2026-08-04T18:33:48.4032595Z             "pw_name": "root",
+2026-08-04T18:33:48.4033270Z             "rgrp": true,
+2026-08-04T18:33:48.4033894Z             "roth": true,
+2026-08-04T18:33:48.4034277Z             "rusr": true,
+2026-08-04T18:33:48.4034657Z             "size": 212,
+2026-08-04T18:33:48.4035039Z             "uid": 0,
+2026-08-04T18:33:48.4035414Z             "wgrp": true,
+2026-08-04T18:33:48.4035809Z             "woth": false,
+2026-08-04T18:33:48.4036199Z             "wusr": true,
+2026-08-04T18:33:48.4036577Z             "xgrp": false,
+2026-08-04T18:33:48.4036953Z             "xoth": false,
+2026-08-04T18:33:48.4037346Z             "xusr": false
+2026-08-04T18:33:48.4037732Z         }
+2026-08-04T18:33:48.4038081Z     ]
+2026-08-04T18:33:48.4038428Z }
+2026-08-04T18:33:48.4038615Z 
+2026-08-04T18:33:48.4038922Z TASK [zos_seed_library : Copy members] *****************************************
+2026-08-04T18:33:48.4375633Z included: /__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/ansible/roles/zos_seed_library/tasks/copy_members.yml for mainframe => (item={'path': '/__w/mf-ansible-capstone-team03/mf-ansible-capstone-team03/ansible/seed_files/JCL/HELLO.jcl', 'mode': '0664', 'isdir': False, 'ischr': False, 'isblk': False, 'isreg': True, 'isfifo': False, 'islnk': False, 'issock': False, 'uid': 0, 'gid': 0, 'size': 212, 'inode': 8918481, 'dev': 2049, 'nlink': 1, 'atime': 1785867956.901447, 'mtime': 1785867468.0, 'ctime': 1785867956.9015272, 'gr_name': 'root', 'pw_name': 'root', 'wusr': True, 'rusr': True, 'xusr': False, 'wgrp': True, 'rgrp': True, 'xgrp': False, 'woth': False, 'roth': True, 'xoth': False, 'isuid': False, 'isgid': False})
+2026-08-04T18:33:48.4379652Z 
+2026-08-04T18:33:48.4380108Z TASK [zos_seed_library : Show destination] *************************************
+2026-08-04T18:33:48.4721503Z ok: [mainframe] => {
+2026-08-04T18:33:48.4722160Z     "msg": "U03D03.DEV.JCL(HELLO)"
+2026-08-04T18:33:48.4722784Z }
+2026-08-04T18:33:48.4723045Z 
+2026-08-04T18:33:48.4723490Z TASK [zos_seed_library : Copy member] ******************************************
+2026-08-04T18:36:10.2802191Z changed: [mainframe]
+2026-08-04T18:36:10.2802534Z 
+2026-08-04T18:36:10.2802982Z TASK [Verify COBOL members] ****************************************************
+2026-08-04T18:36:31.5057949Z changed: [mainframe]
+2026-08-04T18:36:31.5058247Z 
+2026-08-04T18:36:31.5058561Z TASK [Verify JCL members] ******************************************************
+2026-08-04T18:36:52.5078497Z changed: [mainframe]
+2026-08-04T18:36:52.5079953Z 
+2026-08-04T18:36:52.5080837Z TASK [Show COBOL members] ******************************************************
+2026-08-04T18:36:52.5324554Z ok: [mainframe] => {
+2026-08-04T18:36:52.5325203Z     "cobol.output": [
+2026-08-04T18:36:52.5325771Z         {
+2026-08-04T18:36:52.5326373Z             "command": "LISTDS 'U03D03.DEV.COBOL' MEMBERS",
+2026-08-04T18:36:52.5327109Z             "content": [
+2026-08-04T18:36:52.5327723Z                 "U03D03.DEV.COBOL",
+2026-08-04T18:36:52.5328536Z                 "--RECFM-LRECL-BLKSIZE-DSORG",
+2026-08-04T18:36:52.5329678Z                 "  FB    80    27920   PO                                                                                          ",
+2026-08-04T18:36:52.5330593Z                 "--VOLUMES--",
+2026-08-04T18:36:52.5331187Z                 "  USRVS1",
+2026-08-04T18:36:52.5331795Z                 "--MEMBERS--",
+2026-08-04T18:36:52.5332518Z                 "  DATES",
+2026-08-04T18:36:52.5333955Z                 ""
+2026-08-04T18:36:52.5334668Z             ],
+2026-08-04T18:36:52.5335393Z             "failed": false,
+2026-08-04T18:36:52.5336194Z             "lines": 8,
+2026-08-04T18:36:52.5336935Z             "rc": 0,
+2026-08-04T18:36:52.5337674Z             "stderr": ""
+2026-08-04T18:36:52.5338424Z         }
+2026-08-04T18:36:52.5339095Z     ]
+2026-08-04T18:36:52.5339930Z }
+2026-08-04T18:36:52.5340302Z 
+2026-08-04T18:36:52.5340891Z TASK [Show JCL members] ********************************************************
+2026-08-04T18:36:52.5576861Z ok: [mainframe] => {
+2026-08-04T18:36:52.5577516Z     "jcl.output": [
+2026-08-04T18:36:52.5587592Z         {
+2026-08-04T18:36:52.5589581Z             "command": "LISTDS 'U03D03.DEV.JCL' MEMBERS",
+2026-08-04T18:36:52.5590890Z             "content": [
+2026-08-04T18:36:52.5591828Z                 "U03D03.DEV.JCL",
+2026-08-04T18:36:52.5592844Z                 "--RECFM-LRECL-BLKSIZE-DSORG",
+2026-08-04T18:36:52.5594235Z                 "  FB    80    27920   PO                                                                                          ",
+2026-08-04T18:36:52.5595224Z                 "--VOLUMES--",
+2026-08-04T18:36:52.5595804Z                 "  USRVS1",
+2026-08-04T18:36:52.5596367Z                 "--MEMBERS--",
+2026-08-04T18:36:52.5596935Z                 "  HELLO",
+2026-08-04T18:36:52.5597485Z                 ""
+2026-08-04T18:36:52.5598009Z             ],
+2026-08-04T18:36:52.5598535Z             "failed": false,
+2026-08-04T18:36:52.5599108Z             "lines": 8,
+2026-08-04T18:36:52.5599835Z             "rc": 0,
+2026-08-04T18:36:52.5600367Z             "stderr": ""
+2026-08-04T18:36:52.5600909Z         }
+2026-08-04T18:36:52.5601399Z     ]
+2026-08-04T18:36:52.5601906Z }
+2026-08-04T18:36:52.5602176Z 
+2026-08-04T18:36:52.5602627Z TASK [Report provisioned datasets] *********************************************
+2026-08-04T18:36:52.6157895Z ok: [mainframe] => (item=U03D03.DEV.COBOL) => {
+2026-08-04T18:36:52.6158696Z     "msg": "Provisioned: U03D03.DEV.COBOL"
+2026-08-04T18:36:52.6159437Z }
+2026-08-04T18:36:52.6159891Z ok: [mainframe] => (item=U03D03.DEV.JCL) => {
+2026-08-04T18:36:52.6160383Z     "msg": "Provisioned: U03D03.DEV.JCL"
+2026-08-04T18:36:52.6160831Z }
+2026-08-04T18:36:52.6161213Z ok: [mainframe] => (item=U03D03.TST.COBOL) => {
+2026-08-04T18:36:52.6161740Z     "msg": "Provisioned: U03D03.TST.COBOL"
+2026-08-04T18:36:52.6162184Z }
+2026-08-04T18:36:52.6162553Z ok: [mainframe] => (item=U03D03.TST.JCL) => {
+2026-08-04T18:36:52.6163039Z     "msg": "Provisioned: U03D03.TST.JCL"
+2026-08-04T18:36:52.6163479Z }
+2026-08-04T18:36:52.6163698Z 
+2026-08-04T18:36:52.6164044Z TASK [Write provisioning metrics] **********************************************
+2026-08-04T18:36:53.0793257Z changed: [mainframe -> localhost]
+2026-08-04T18:36:53.0793752Z 
+2026-08-04T18:36:53.0794148Z PLAY RECAP *********************************************************************
+2026-08-04T18:36:53.0795278Z mainframe                  : ok=42   changed=17   unreachable=0    failed=0    skipped=14   rescued=0    ignored=0   
+2026-08-04T18:36:53.0796044Z 
+2026-08-04T18:36:53.1605695Z # HELP github_ansible_playbook_latest_success Whether the latest playbook run succeeded
+2026-08-04T18:36:53.1606753Z # TYPE github_ansible_playbook_latest_success gauge
+2026-08-04T18:36:53.1607573Z github_ansible_playbook_latest_success{playbook="racf_apply_change.yml",repo="mf-ansible-capstone-team03",branch="main"} 1
+2026-08-04T18:36:53.1608126Z 
+2026-08-04T18:36:53.1608455Z # HELP github_ansible_playbook_latest_failure Whether the latest playbook run failed
+2026-08-04T18:36:53.1609087Z # TYPE github_ansible_playbook_latest_failure gauge
+2026-08-04T18:36:53.1610849Z github_ansible_playbook_latest_failure{playbook="racf_apply_change.yml",repo="mf-ansible-capstone-team03",branch="main"} 0
+2026-08-04T18:36:53.1611426Z 
+2026-08-04T18:36:53.1611756Z # HELP github_ansible_playbook_latest_exit_code Exit code from the latest playbook run
+2026-08-04T18:36:53.1612410Z # TYPE github_ansible_playbook_latest_exit_code gauge
+2026-08-04T18:36:53.1613494Z github_ansible_playbook_latest_exit_code{playbook="racf_apply_change.yml",repo="mf-ansible-capstone-team03",branch="main"} 0
+2026-08-04T18:36:53.1614051Z 
+2026-08-04T18:36:53.1614399Z # HELP github_ansible_playbook_latest_duration_seconds Duration of the latest playbook run
+2026-08-04T18:36:53.1615089Z # TYPE github_ansible_playbook_latest_duration_seconds gauge
+2026-08-04T18:36:53.1615919Z github_ansible_playbook_latest_duration_seconds{playbook="racf_apply_change.yml",repo="mf-ansible-capstone-team03",branch="main"} 644
+2026-08-04T18:36:53.1616497Z 
+2026-08-04T18:36:53.1616866Z # HELP github_ansible_playbook_last_run_timestamp_seconds Unix timestamp of latest playbook run
+2026-08-04T18:36:53.1617738Z # TYPE github_ansible_playbook_last_run_timestamp_seconds gauge
+2026-08-04T18:36:53.1618609Z github_ansible_playbook_last_run_timestamp_seconds{playbook="racf_apply_change.yml",repo="mf-ansible-capstone-team03",branch="main"} 1785868613
+2026-08-04T18:36:53.1619220Z 
+2026-08-04T18:36:53.1619778Z # HELP github_ansible_playbook_run_success One time series per successful build
+2026-08-04T18:36:53.1620410Z # TYPE github_ansible_playbook_run_success gauge
+2026-08-04T18:36:53.1621195Z github_ansible_playbook_run_success{playbook="racf_apply_change.yml",repo="mf-ansible-capstone-team03",branch="main",build="80"} 1
+2026-08-04T18:36:53.1621763Z 
+2026-08-04T18:36:53.1622064Z # HELP github_ansible_playbook_run_failure One time series per failed build
+2026-08-04T18:36:53.1622661Z # TYPE github_ansible_playbook_run_failure gauge
+2026-08-04T18:36:53.1623418Z github_ansible_playbook_run_failure{playbook="racf_apply_change.yml",repo="mf-ansible-capstone-team03",branch="main",build="80"} 0
+2026-08-04T18:36:53.1623975Z 
+2026-08-04T18:36:53.1624298Z # HELP github_ansible_playbook_run_duration_seconds Duration for this specific build
+2026-08-04T18:36:53.1624948Z # TYPE github_ansible_playbook_run_duration_seconds gauge
+2026-08-04T18:36:53.1625830Z github_ansible_playbook_run_duration_seconds{playbook="racf_apply_change.yml",repo="mf-ansible-capstone-team03",branch="main",build="80"} 644
+2026-08-04T18:36:53.1626663Z # HELP zos_racf_users_total Number of managed RACF users
+2026-08-04T18:36:53.1627162Z # TYPE zos_racf_users_total gauge
+2026-08-04T18:36:53.1627579Z zos_racf_users_total 5
+2026-08-04T18:36:53.1627799Z 
+2026-08-04T18:36:53.1628033Z # HELP zos_racf_groups_total Number of managed RACF groups
+2026-08-04T18:36:53.1628535Z # TYPE zos_racf_groups_total gauge
+2026-08-04T18:36:53.1628952Z zos_racf_groups_total 5
+2026-08-04T18:36:53.1629170Z 
+2026-08-04T18:36:53.1629821Z # HELP zos_racf_user_present Whether a RACF user is present in its assigned group
+2026-08-04T18:36:53.1630698Z # TYPE zos_racf_user_present gauge
+2026-08-04T18:36:53.1631168Z zos_racf_user_present{userid="U03D01",group="D03GPT"} 1
+2026-08-04T18:36:53.1631695Z zos_racf_user_present{userid="U03D02",group="D03GPT"} 1
+2026-08-04T18:36:53.1632190Z zos_racf_user_present{userid="U03D03",group="D03GPT"} 1
+2026-08-04T18:36:53.1632707Z zos_racf_user_present{userid="P03PTU",group="P03PTG"} 1
+2026-08-04T18:36:53.1633210Z zos_racf_user_present{userid="U03T01",group="T03GPT"} 1
+2026-08-04T18:36:53.1633502Z 
+2026-08-04T18:36:53.1633764Z # HELP zos_racf_group_present Whether a managed RACF group is present
+2026-08-04T18:36:53.1634316Z # TYPE zos_racf_group_present gauge
+2026-08-04T18:36:53.1634900Z zos_racf_group_present{group="D03GRP",owner="IBMUSER",superior_group="SYS1",gid="8031"} 1
+2026-08-04T18:36:53.1635659Z zos_racf_group_present{group="D03GPT",owner="IBMUSER",superior_group="D03GRP",gid="8032"} 1
+2026-08-04T18:36:53.1636409Z zos_racf_group_present{group="T03GPT",owner="IBMUSER",superior_group="D03GRP",gid="8033"} 1
+2026-08-04T18:36:53.1637151Z zos_racf_group_present{group="P03APPS",owner="IBMUSER",superior_group="SYS1",gid="8034"} 1
+2026-08-04T18:36:53.1637913Z zos_racf_group_present{group="P03PTG",owner="IBMUSER",superior_group="P03APPS",gid="8035"} 1
+2026-08-04T18:36:53.1638346Z 
+2026-08-04T18:36:53.1638653Z # HELP zos_racf_dataset_access Desired dataset access assigned to a RACF user
+2026-08-04T18:36:53.1639830Z # TYPE zos_racf_dataset_access gauge
+2026-08-04T18:36:53.1640313Z zos_racf_dataset_access{userid="U03D01",access="ALTER"} 1
+2026-08-04T18:36:53.1640839Z zos_racf_dataset_access{userid="U03D02",access="ALTER"} 1
+2026-08-04T18:36:53.1641365Z zos_racf_dataset_access{userid="U03T01",access="UPDATE"} 1
+2026-08-04T18:36:53.1641890Z zos_racf_dataset_access{userid="P03PTU",access="UPDATE"} 1
+2026-08-04T18:36:53.1642407Z zos_racf_dataset_access{userid="U03D03",access="ALTER"} 1
+2026-08-04T18:36:53.1642712Z 
+2026-08-04T18:36:53.1642999Z # HELP zos_racf_profile_uacc RACF dataset profile universal access setting
+2026-08-04T18:36:53.1643562Z # TYPE zos_racf_profile_uacc gauge
+2026-08-04T18:36:53.1644149Z zos_racf_profile_uacc{uacc="NONE"} 1
+2026-08-04T18:36:53.1644733Z # HELP zos_db2_table_count_by_creator Count of SYSIBM.SYSTABLES rows grouped by CREATOR
+2026-08-04T18:36:53.1645346Z # TYPE zos_db2_table_count_by_creator gauge
+2026-08-04T18:36:53.1645947Z # HELP zos_db2_batch_job_success Whether the DB2 batch job completed successfully
+2026-08-04T18:36:53.1646527Z # TYPE zos_db2_batch_job_success gauge
+2026-08-04T18:36:53.1646989Z zos_db2_batch_job_success{host="mainframe"} 1
+2026-08-04T18:36:53.1647486Z Publishing latest provisioning state...
+2026-08-04T18:36:53.2903403Z 
+2026-08-04T18:36:53.2904260Z Latest provisioning state published.
+2026-08-04T18:36:53.3190681Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-04T18:36:53.3192356Z Post job cleanup.
+2026-08-04T18:36:53.3202943Z ##[command]/usr/bin/docker exec  631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b sh -c "cat /etc/*release | grep ^ID"
+2026-08-04T18:36:53.5296159Z Stop and remove container: 4985e45e6fbf462dbc51074fd1889396_innovationinsoftwaremfansible180_48db84
+2026-08-04T18:36:53.5303130Z ##[command]/usr/bin/docker rm --force 631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b
+2026-08-04T18:36:53.7400358Z 631a862d9aabe50265d7916cb6dd1623ad230cb8a842f40a713c294e1292bf1b
+2026-08-04T18:36:53.7434243Z Remove container network: github_network_e258ac125ebc4a61af6dfb27b2fa32a3
+2026-08-04T18:36:53.7439204Z ##[command]/usr/bin/docker network rm github_network_e258ac125ebc4a61af6dfb27b2fa32a3
+2026-08-04T18:36:53.8465664Z github_network_e258ac125ebc4a61af6dfb27b2fa32a3
+2026-08-04T18:36:53.8558545Z Cleaning up orphan processes
+2026-08-04T18:36:53.8982472Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

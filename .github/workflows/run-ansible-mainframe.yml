@@ -273,6 +273,21 @@ jobs:
             echo "Latest provisioning state published."
           fi
 
+          # Push the latest RACF state to a stable grouping key.
+          # PUT replaces the previous RACF metrics instead of accumulating a new,
+          # never-overwritten series per playbook/build combination.
+          if [ -f racf_metrics.prom ] && [ -n "${PUSHGATEWAY_URL}" ]; then
+            echo "Publishing latest RACF state..."
+
+            curl --fail --show-error --silent \
+              --request PUT \
+              --data-binary @racf_metrics.prom \
+              "${PUSHGATEWAY_URL}/metrics/job/racf_latest/repo/${REPO_SLUG}"
+
+            echo
+            echo "Latest RACF state published."
+          fi
+
           exit $RESULT
 
       - name: Upload CICS report
