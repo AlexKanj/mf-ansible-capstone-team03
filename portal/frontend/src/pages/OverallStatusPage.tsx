@@ -336,11 +336,11 @@ export function OverallStatusPage() {
         />
 
         <StatusCard
-          title="Active z/OS Jobs"
+          title="Active z/OS Address Spaces"
           value={formatNumber(
             overview.mainframe_activity.active_jobs,
           )}
-          detail="Total active jobs"
+          detail="STCs, TSO sessions, and batch jobs"
         />
 
         <StatusCard
@@ -353,12 +353,11 @@ export function OverallStatusPage() {
         />
 
         <StatusCard
-          title="Active Batch Jobs"
+          title="Batch Jobs Running Now"
           value={formatNumber(
-            overview.mainframe_activity
-              .active_batch_jobs,
+            overview.mainframe_activity.active_batch_jobs,
           )}
-          detail="Current batch workload"
+          detail="Current active JCL workloads"
         />
       </section>
 
