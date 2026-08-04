@@ -26,8 +26,10 @@
 
   environment: "{{ environment_vars }}"
 
-  vars_files:
-    - racf_vars.yml
+  pre_tasks:
+    - name: Load current managed RACF configuration
+      ansible.builtin.include_tasks:
+        file: tasks/load_racf_config.yml
 
   vars:
     mlq: DEV
@@ -55,12 +57,27 @@
         libname: JCL
         primary_allocation: 2
         secondary_allocation: 4
+    managed_users: >-
+      {{
+        users
+        | dict2items
+        | map(attribute='value')
+        | flatten
+        | unique
+        | sort
+      }}
+
     target_users: >-
       {{
         [userid]
-        if (userid is defined and (userid | string | length) > 0)
-        else (users | dict2items | map(attribute='value') | flatten | unique | sort)
+        if (
+          userid is defined
+          and (userid | string | trim | length) > 0
+        )
+        else managed_users
       }}
+
+    metric_users: "{{ managed_users }}"
 
   tasks:
     - name: Provision datasets for each RACF user
@@ -77,21 +94,21 @@
         dest: provision_metrics.prom
         mode: "0644"
         content: |
-          # HELP zos_provision_users_total Number of users included in this provisioning run
+          # HELP zos_provision_users_total Number of managed users represented in the current provisioning snapshot
           # TYPE zos_provision_users_total gauge
-          zos_provision_users_total {{ target_users | length }}
+          zos_provision_users_total {{ metric_users | length }}
 
           # HELP zos_provision_datasets_expected Number of datasets expected for each user
           # TYPE zos_provision_datasets_expected gauge
-          {% for target_user in target_users %}
-          zos_provision_datasets_expected{userid="{{ target_user }}"} {{ libraries | length }}
+          {% for metric_user in metric_users %}
+          zos_provision_datasets_expected{userid="{{ metric_user }}"} {{ libraries | length }}
           {% endfor %}
 
-          # HELP zos_user_dataset_ready Whether a user dataset was successfully provisioned
+          # HELP zos_user_dataset_ready Whether a managed user dataset was provisioned and is expected ready
           # TYPE zos_user_dataset_ready gauge
-          {% for target_user in target_users %}
+          {% for metric_user in metric_users %}
           {% for library in libraries %}
-          zos_user_dataset_ready{userid="{{ target_user }}",dataset="{{ target_user }}.{{ library.mlq }}.{{ library.libname }}",environment="{{ library.mlq }}",library_type="{{ library.libname }}"} 1
+          zos_user_dataset_ready{userid="{{ metric_user }}",dataset="{{ metric_user }}.{{ library.mlq }}.{{ library.libname }}",environment="{{ library.mlq }}",library_type="{{ library.libname }}"} 1
           {% endfor %}
           {% endfor %}
 
