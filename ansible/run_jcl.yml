@@ -66,6 +66,9 @@
              (ret_code_msg | regex_search('(\\d+)', '\\1') or ['-1'])
           ) %}
           {{ rc_from_spool | first | int }}
+
+    - name: Derive success metric from parsed return code
+      set_fact:
         _success: >-
           {{ 1 if (_rc_num | int) != -1 and (_rc_num | int) <= 4 else 0 }}
 
