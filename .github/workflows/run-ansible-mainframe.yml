@@ -75,7 +75,10 @@ jobs:
           ansible-galaxy collection install \
             ibm.ibm_zos_core:1.9.3 \
             ibm.ibm_zos_cics:2.2.1 \
+            amazon.aws:">=8.0.0" \
             --collections-path /root/.ansible/collections
+
+          pip install --quiet boto3 botocore
 
           ansible-galaxy collection list
 
@@ -97,6 +100,11 @@ jobs:
           ID_RSA: ${{ secrets.id_rsa }}
           ANSIBLE_COLLECTIONS_PATHS: /root/.ansible/collections
           PYTHONPATH: /root/.ansible/collections
+          RACF_CONFIG_S3_BUCKET: ${{ vars.RACF_CONFIG_S3_BUCKET }}
+          RACF_CONFIG_S3_KEY: ${{ vars.RACF_CONFIG_S3_KEY }}
+          AWS_DEFAULT_REGION: ${{ vars.PORTAL_AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           mkdir -p .ssh
           chmod 700 .ssh
