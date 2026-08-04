@@ -48,26 +48,26 @@
       debug:
         msg: "{{ job_output.jobs[0].ddnames | map(attribute='content') | list }}"
 
-    - name: Parse job output into metric values
-      set_fact:
-        _job_id: "{{ job_output.jobs[0].job_id }}"
-        _job_name: "{{ job_output.jobs[0].job_name | default('UNKNOWN') }}"
-        _rc_num: >-
-          {{ job_output.jobs[0].ret_code.msg
-             | regex_replace('^CC\s+0*(\d+)$', '\1') | int
-             if job_output.jobs[0].ret_code.msg is match('^CC\s+\d+$')
-             else -1 }}
-        _success: >-
-          {{ 1 if (job_output.jobs[0].ret_code.msg is match('^CC\s+\d+$')
-                   and (job_output.jobs[0].ret_code.msg
-                        | regex_replace('^CC\s+0*(\d+)$', '\1') | int) <= 4)
-             else 0 }}
-
     - name: Concatenate all spool content for parsing
       set_fact:
         _spool_text: >-
           {{ job_output.jobs[0].ddnames
              | map(attribute='content') | list | flatten | join('\n') }}
+
+    - name: Parse job output into metric values
+      set_fact:
+        _job_id: "{{ job_output.jobs[0].job_id }}"
+        _job_name: "{{ job_output.jobs[0].job_name | default('UNKNOWN') }}"
+        _rc_num: >-
+          {% set ret_code_msg = job_output.jobs[0].ret_code.msg | default('') %}
+          {% set rc_from_spool = (
+             _spool_text | regex_search('RC[=\\s]+0*(\\d+)', '\\1') or
+             _spool_text | regex_search('COND CODE\\s+0*(\\d+)', '\\1') or
+             (ret_code_msg | regex_search('(\\d+)', '\\1') or ['-1'])
+          ) %}
+          {{ rc_from_spool | first | int }}
+        _success: >-
+          {{ 1 if (_rc_num | int) != -1 and (_rc_num | int) <= 4 else 0 }}
 
     - name: Parse record counts from spool
       set_fact:
