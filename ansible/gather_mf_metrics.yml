@@ -17,7 +17,7 @@
     #   CLUSTER ------- IBMUSER.VSAM.KSDS
     # We parse the type keyword and dataset name from each line.
     # ----------------------------------------------------------------
-    - name: List all IBMUSER catalog entries
+    - name: List all Team03 catalog entries
       zos_tso_command:
         commands:
           - "LISTCAT LEVEL('U03D01')"
@@ -49,47 +49,126 @@
       zos_job_query:
       register: active_jobs
 
-    - name: Count active started tasks (STCs)
-      set_fact:
-        _stc_count: >-
-          {{ active_jobs.jobs
-             | selectattr('job_class', 'defined')
-             | selectattr('job_class', 'equalto', 'STC')
-             | list | length }}
+    - name: Initialize active workload lists
+      ansible.builtin.set_fact:
+        _active_job_ids: []
+        _active_stc_ids: []
+        _active_batch_ids: []
+        _active_tsu_ids: []
 
-    - name: Count active batch jobs
-      set_fact:
-        _batch_count: >-
-          {{ active_jobs.jobs
-             | selectattr('job_class', 'defined')
-             | selectattr('job_class', 'equalto', 'JOB')
-             | list | length }}
+    - name: Classify active z/OS address spaces
+      ansible.builtin.set_fact:
+        _active_job_ids: >-
+          {{
+            _active_job_ids
+            + [item.job_id | default('UNKNOWN')]
+          }}
 
-    - name: Count total active jobs (all classes)
-      set_fact:
-        _total_job_count: "{{ active_jobs.jobs | length }}"
+        _active_stc_ids: >-
+          {{
+            _active_stc_ids
+            + (
+                [item.job_id]
+                if (
+                  item.job_id is defined
+                  and (
+                    item.job_id | upper
+                    | regex_search('^(STC[0-9]+|S[0-9]+)$')
+                  )
+                )
+                else []
+              )
+          }}
+
+        _active_batch_ids: >-
+          {{
+            _active_batch_ids
+            + (
+                [item.job_id]
+                if (
+                  item.job_id is defined
+                  and (
+                    item.job_id | upper
+                    | regex_search('^(JOB[0-9]+|J[0-9]+)$')
+                  )
+                )
+                else []
+              )
+          }}
+
+        _active_tsu_ids: >-
+          {{
+            _active_tsu_ids
+            + (
+                [item.job_id]
+                if (
+                  item.job_id is defined
+                  and (
+                    item.job_id | upper
+                    | regex_search('^(TSU[0-9]+|T[0-9]+)$')
+                  )
+                )
+                else []
+              )
+          }}
+      loop: "{{ active_jobs.jobs | default([]) }}"
+      loop_control:
+        label: >-
+          {{
+            item.job_name
+            | default(item.jobname)
+            | default('unknown')
+          }}
+      when:
+        - item.asid is defined
+        - (item.asid | string | trim | int) > 0
+
+    - name: Derive active workload counts
+      ansible.builtin.set_fact:
+        _total_job_count: "{{ _active_job_ids | length }}"
+        _stc_count: "{{ _active_stc_ids | length }}"
+        _batch_count: "{{ _active_batch_ids | length }}"
+        _tsu_count: "{{ _active_tsu_ids | length }}"
+
+    - name: Display active workload counts
+      ansible.builtin.debug:
+        msg:
+          - "Active address spaces: {{ _total_job_count }}"
+          - "Active started tasks: {{ _stc_count }}"
+          - "Active batch jobs: {{ _batch_count }}"
+          - "Active TSO users: {{ _tsu_count }}"
+          - "Active batch job IDs: {{ _active_batch_ids }}"
 
     # ----------------------------------------------------------------
     # Write metrics file — pipeline appends this to metrics.prom
     # and pushes everything in one curl call.
     # ----------------------------------------------------------------
     - name: Write mf_metrics.prom
-      copy:
+      ansible.builtin.copy:
         dest: "{{ playbook_dir }}/mf_metrics.prom"
+        mode: "0644"
         content: |
-          # HELP zos_ibmuser_dataset_count Total cataloged datasets under the IBMUSER HLQ
-          # TYPE zos_ibmuser_dataset_count gauge
-          zos_ibmuser_dataset_count{host="{{ inventory_hostname }}"} {{ _dataset_count }}
+          # HELP zos_team03_dataset_count Total cataloged datasets for Team 03 managed users
+          # TYPE zos_team03_dataset_count gauge
+          zos_team03_dataset_count{host="{{ inventory_hostname }}"} {{ _dataset_count }}
+
           # HELP zos_active_stc_count Number of currently active started tasks
           # TYPE zos_active_stc_count gauge
           zos_active_stc_count{host="{{ inventory_hostname }}"} {{ _stc_count }}
+
           # HELP zos_active_batch_job_count Number of currently active batch jobs
           # TYPE zos_active_batch_job_count gauge
           zos_active_batch_job_count{host="{{ inventory_hostname }}"} {{ _batch_count }}
-          # HELP zos_active_job_count Total active jobs across all classes
+
+          # HELP zos_active_tsu_count Number of active TSO user address spaces
+          # TYPE zos_active_tsu_count gauge
+          zos_active_tsu_count{host="{{ inventory_hostname }}"} {{ _tsu_count }}
+
+          # HELP zos_active_job_count Total active z/OS address spaces
           # TYPE zos_active_job_count gauge
           zos_active_job_count{host="{{ inventory_hostname }}"} {{ _total_job_count }}
-          # HELP zos_dataset_exists Presence of a cataloged dataset; type label shows VSAM type
+
+          # HELP zos_dataset_exists Presence of a cataloged dataset
           # TYPE zos_dataset_exists gauge
           {% for pair in _dataset_pairs %}
           zos_dataset_exists{host="{{ inventory_hostname }}",dataset="{{ pair[1] }}",type="{{ pair[0] }}"} 1
