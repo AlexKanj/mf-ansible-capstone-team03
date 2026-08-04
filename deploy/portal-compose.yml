@@ -9,6 +9,7 @@ services:
       GITHUB_REPO: "${GITHUB_REPO}"
       GITHUB_TOKEN: "${GITHUB_TOKEN}"
       RACF_STATE_BUCKET: "${RACF_STATE_BUCKET}"
+      RACF_STATE_KEY: "${RACF_STATE_KEY}"
     networks:
       - portal
     healthcheck:
