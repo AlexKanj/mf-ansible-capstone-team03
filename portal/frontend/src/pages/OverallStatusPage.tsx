@@ -363,6 +363,21 @@ export function OverallStatusPage() {
         />
       </section>
 
+      <section className="racf-hierarchy">
+        <h2>RACF Group &amp; User Hierarchy</h2>
+
+        <p className="page-description">
+          Expected structure provisioned by the RACF
+          automation for this application.
+        </p>
+
+        <img
+          src="/RACF-Hierarchy.png"
+          alt="RACF group and user hierarchy diagram"
+          className="racf-hierarchy__image"
+        />
+      </section>
+
       <section className="portal-links">
         <a
           href={grafanaUrl}

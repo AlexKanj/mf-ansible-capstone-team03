@@ -105,6 +105,12 @@ const BUILD_AREAS = [
   },
 ];
 
+const TEAM_MEMBERS = [
+  { name: "Miles N.", photo: "/MilesN_Headshot.jpeg" },
+  { name: "Ray T.", photo: "/RayT_Headshot.jpg" },
+  { name: "Alex Kanj", photo: "/AlexKanj_Heahsot.jpg" },
+];
+
 const DEMO_STEPS = [
   {
     number: "01",
@@ -181,6 +187,15 @@ export function HomePage() {
 
   return (
     <main className="home-page">
+      <div className="home-team" aria-label="Team members">
+        {TEAM_MEMBERS.map((member) => (
+          <div className="home-team__member" key={member.name}>
+            <img src={member.photo} alt={member.name} />
+            <span>{member.name}</span>
+          </div>
+        ))}
+      </div>
+
       <section className="home-hero">
         <div className="home-hero__glow" aria-hidden="true" />
 
@@ -388,15 +403,6 @@ export function HomePage() {
             </p>
             <h2>Two repositories, one integrated solution</h2>
           </div>
-
-          <p>
-            The mf-ansible-capstone-team03 directory contains the ansible playbooks
-            for monitoring and configuring the z/OS platform. These playbooks are stored 
-            in the ansible/ directory. The .github/workflows/run-ansible-mainframe.yml is
-            responsible for running the ansible playbooks. This repo also contains the code 
-            and Docker containers for the frontend admin app. This app uses the ansible playbooks
-            and GitHub Actions to fire off commands to z/OS without needing the GitHub Actions UI.
-          </p>
         </div>
 
         <div className="home-repo-grid">
@@ -414,8 +420,12 @@ export function HomePage() {
 
             <h3>mf-ansible-capstone-team03</h3>
             <p>
-              Mainframe automation, JCL, RACF, operational
-              metrics, FastAPI, and the React portal.
+              The mf-ansible-capstone-team03 directory contains the ansible playbooks
+              for monitoring and configuring the z/OS platform. These playbooks are stored 
+              in the ansible/ directory. The .github/workflows/run-ansible-mainframe.yml is
+              responsible for running the ansible playbooks. This repo also contains the code 
+              and Docker containers for the frontend admin app. This app uses the ansible playbooks
+              and GitHub Actions to fire off commands to z/OS without needing the GitHub Actions UI.
             </p>
 
             <pre>
@@ -622,6 +632,10 @@ ansible/
 
         <Link to="/overview">
           Continue to the live demonstration →
+        </Link>
+
+        <Link to="/conclusion">
+          Jump to conclusion →
         </Link>
       </footer>
     </main>

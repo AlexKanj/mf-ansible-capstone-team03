@@ -332,6 +332,31 @@ h1 {
   background: #ed5a67;
 }
 
+/* RACF hierarchy diagram */
+
+.racf-hierarchy {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid #263249;
+  border-radius: 15px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(21, 31, 50, 0.97),
+      rgba(13, 21, 36, 0.97)
+    );
+}
+
+.racf-hierarchy__image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-top: 16px;
+  border: 1px solid #263249;
+  border-radius: 11px;
+  background: #fff;
+}
+
 /* External links */
 
 .portal-links {

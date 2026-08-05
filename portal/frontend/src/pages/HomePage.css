@@ -4,6 +4,34 @@
   padding: 28px 0 42px;
 }
 
+.home-team {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin-bottom: 24px;
+}
+
+.home-team__member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-team__member img {
+  width: 76px;
+  height: 76px;
+  border: 2px solid #3c4b66;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.home-team__member span {
+  color: #b0bbcc;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
 .home-page h2,
 .home-page h3,
 .home-page p {

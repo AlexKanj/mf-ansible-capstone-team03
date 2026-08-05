@@ -7,6 +7,7 @@ import {
 
 import { AutomationRunPage } from "./pages/AutomationRunPage";
 import { BatchOperationsPage } from "./pages/BatchOperationsPage";
+import { ConclusionPage } from "./pages/ConclusionPage";
 import { HomePage } from "./pages/HomePage";
 import { OverallStatusPage } from "./pages/OverallStatusPage";
 import { RacfManagementPage } from "./pages/RacfManagementPage";
@@ -67,6 +68,15 @@ export default function App() {
           >
             RACF Management
           </NavLink>
+
+          <NavLink
+            to="/conclusion"
+            className={({ isActive }) =>
+              navLinkClass(isActive)
+            }
+          >
+            Conclusion
+          </NavLink>
         </nav>
 
         <Routes>
@@ -86,6 +96,10 @@ export default function App() {
           <Route
             path="/racf-management"
             element={<RacfManagementPage />}
+          />
+          <Route
+            path="/conclusion"
+            element={<ConclusionPage />}
           />
           <Route path="*" element={<HomePage />} />
         </Routes>
