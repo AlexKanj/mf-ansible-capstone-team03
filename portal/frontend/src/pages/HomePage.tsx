@@ -114,7 +114,7 @@ const DEMO_STEPS = [
   },
   {
     number: "02",
-    title: "See resutls in Grafana",
+    title: "See results in Grafana",
     description:
       "After we have shown a few playbooks, we will then demonstrate how we can view that status of z/OS through a Grafana dashboard",
   },
@@ -295,9 +295,9 @@ export function HomePage() {
             <h3>Disconnected operating models</h3>
             <p>
               In this project's hypothetical starting point, Linux and
-              z/OS were being managed seperately. This 
+              z/OS were being managed separately. This 
               limited consistency and visibility. It also created a lot of 
-              manual and time-cosuming work.
+              manual and time-consuming work.
             </p>
           </article>
 
@@ -391,11 +391,11 @@ export function HomePage() {
 
           <p>
             The mf-ansible-capstone-team03 directory contains the ansible playbooks
-            for monitoring and configuring the z/OS platform. These playbooks are store 
+            for monitoring and configuring the z/OS platform. These playbooks are stored 
             in the ansible/ directory. The .github/workflows/run-ansible-mainframe.yml is
             responsible for running the ansible playbooks. This repo also contains the code 
             and Docker containers for the frontend admin app. This app uses the ansible playbooks
-            and github acitons to first off commands to z/OS without needing the GitHub Actions UI.
+            and GitHub Actions to fire off commands to z/OS without needing the GitHub Actions UI.
           </p>
         </div>
 
@@ -444,8 +444,8 @@ portal/
 
             <h3>terraform-grafana-stack-captsone-team03</h3>
             <p>
-              This repo conatins Terraform which provisions
-              AWS with the resources that will be needed for Grafana and Prometheus
+              This repo contains Terraform which provisions
+              AWS with the resources that will be needed for Grafana and Prometheus.
               It allows Ansible to discover the hosts created by Terraform using AWS EC2
               dynamic inventory. Once Ansible knows what it needs to configure, it sets up
               the required infrastructure and containers for Grafana and Prometheus.
