@@ -1,5 +1,0 @@
-# HELP zos_db2_table_count_by_creator Count of SYSIBM.SYSTABLES rows grouped by CREATOR
-# TYPE zos_db2_table_count_by_creator gauge
-# HELP zos_db2_batch_job_success Whether the DB2 batch job completed successfully
-# TYPE zos_db2_batch_job_success gauge
-zos_db2_batch_job_success{host="mainframe"} 1
