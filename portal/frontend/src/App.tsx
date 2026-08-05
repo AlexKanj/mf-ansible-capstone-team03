@@ -11,6 +11,7 @@ import { ConclusionPage } from "./pages/ConclusionPage";
 import { HomePage } from "./pages/HomePage";
 import { OverallStatusPage } from "./pages/OverallStatusPage";
 import { RacfManagementPage } from "./pages/RacfManagementPage";
+import { TechnicalVideoPage } from "./pages/TechnicalVideoPage";
 
 function navLinkClass(isActive: boolean): string {
   return isActive
@@ -77,6 +78,15 @@ export default function App() {
           >
             Conclusion
           </NavLink>
+
+          <NavLink
+            to="/technical-video"
+            className={({ isActive }) =>
+              navLinkClass(isActive)
+            }
+          >
+            Technical Video
+          </NavLink>
         </nav>
 
         <Routes>
@@ -100,6 +110,10 @@ export default function App() {
           <Route
             path="/conclusion"
             element={<ConclusionPage />}
+          />
+          <Route
+            path="/technical-video"
+            element={<TechnicalVideoPage />}
           />
           <Route path="*" element={<HomePage />} />
         </Routes>

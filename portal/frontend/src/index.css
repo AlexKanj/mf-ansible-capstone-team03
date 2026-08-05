@@ -103,6 +103,14 @@ a {
   padding: 42px 0 32px;
 }
 
+.technical-video__player {
+  display: block;
+  width: 100%;
+  border: 1px solid #263249;
+  border-radius: 15px;
+  background: #000000;
+}
+
 /* Header */
 
 .page-header {
