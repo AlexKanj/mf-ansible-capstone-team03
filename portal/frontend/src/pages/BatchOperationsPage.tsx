@@ -235,7 +235,7 @@ export function BatchOperationsPage() {
             />
           </section>
 
-          <section className="batch-section">
+          {/* <section className="batch-section">
             <div className="section-heading">
               <div>
                 <p className="eyebrow">Output</p>
@@ -260,9 +260,9 @@ export function BatchOperationsPage() {
                 Full output unavailable
               </span>
             )}
-          </section>
+          </section> */}
         </>
-      )}
+      )} 
 
       <section className="batch-section">
         <div className="section-heading">
