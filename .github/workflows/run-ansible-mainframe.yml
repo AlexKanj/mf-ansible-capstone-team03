@@ -34,6 +34,7 @@ on:
           - list_datasets.jcl
           - report_customers.jcl
           - sort_customers.jcl
+          - db2_query.jcl
         required: false
       STUDENT_ID:
         description: Student ID
