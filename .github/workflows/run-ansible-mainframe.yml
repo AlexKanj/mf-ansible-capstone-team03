@@ -244,6 +244,23 @@ jobs:
 
           cat metrics.prom
 
+          # Publish automation and workload metrics. A per-build grouping key
+          # keeps individual JCL/JES results available so Grafana can select
+          # the newest run or display recent runs.
+          if [ -n "${PUSHGATEWAY_URL}" ]; then
+            echo "Publishing automation and workload metrics..."
+
+            curl --fail --show-error --silent \
+              --request PUT \
+              --data-binary @metrics.prom \
+              "${PUSHGATEWAY_URL}/metrics/job/ansible_automation/repo/${REPO_SLUG}/playbook/${PLAYBOOK_NAME}/build/${BUILD_NUMBER}"
+
+            echo
+            echo "Automation and workload metrics published."
+          else
+            echo "PUSHGATEWAY_URL is not configured; metrics were not published."
+          fi
+
           # Publish the latest mainframe system snapshot.
           # PUT replaces the previous snapshot instead of accumulating runs.
           if [ -f mf_metrics.prom ] &&
